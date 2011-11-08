@@ -52,7 +52,7 @@ if __name__ == "__main__":
 			
 		#Lets find out what it's made of!
 		eth = dpkt.ethernet.Ethernet(packet.pData)
-		print type(eth.data), len(eth.data)
+		#print type(eth.data), len(eth.data)
 		
 		if type(eth.data) == type(dpkt.ip.IP()):
 			#It's an ip packet!

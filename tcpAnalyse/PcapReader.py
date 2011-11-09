@@ -6,6 +6,7 @@ import datetime
 #Link types
 LL_ETHERNET = 1
 LL_IEEE802_11 = 105
+LL_LINUX_SLL = 113
 
 class PcapPacket(object):
 	

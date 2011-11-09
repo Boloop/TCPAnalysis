@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	print "Pcap file open details:"
 	print "R: {0} V:{1}.{2} NetType: {3}".format( p.reversed, p.versionNumberMajor, p.versionNumberMinor, p.netType) 
 	
-	if p.netType != pcr.LL_ETHERNET and p.netType != 113:
+	if p.netType != pcr.LL_ETHERNET and p.netType != pcr.LL_LINUX_SLL:
 		print "Does not support this Link Type :( QUITTING"
 		sys.exit() 
 	
@@ -51,11 +51,16 @@ if __name__ == "__main__":
 			
 			
 		#Lets find out what it's made of!
-		eth = dpkt.ethernet.Ethernet(packet.pData)
-		#print type(eth.data), len(eth.data)
+		if   p.netType == pcr.LL_ETHERNET:
+			eth = dpkt.ethernet.Ethernet(packet.pData)
+		elif p.netType == pcr.LL_LINUX_SLL:
+			eth = dpkt.ethernet.Ethernet(packet.pData[2:]) # Hacks, lol. Just don't try to read the ethernet 
+								       # frame. Addys wrong, but ethertype right!
+								       # http://www.tcpdump.org/linktypes/LINKTYPE_LINUX_SLL.html
 		
+		#Is it an IP packet, yeah?
 		if type(eth.data) == type(dpkt.ip.IP()):
-			#It's an ip packet!
+			#It is, It is an ip packet!
 			ip = eth.data
 			if type(ip.data) == type(dpkt.tcp.TCP()):
 				#it's TCP

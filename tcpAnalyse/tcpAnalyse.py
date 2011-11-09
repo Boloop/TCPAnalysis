@@ -88,20 +88,29 @@ if __name__ == "__main__":
 		print ipa+" >>  FORWARD  >> "+ipb
 		print ipa+" <<  BACKWARD << "+ipb
 		
-		rttts, rttrtt = tcpCon.getRTT(path = tm.PATH_FORWARD)
-		rttdata = gp.Data(rttts[:-5],rttrtt[:-5])
 		
+		#Congestion Window
 		wints, winwin = tcpCon.unackdPackets()
-		rttdata2 = gp.Data(wints[:-25],winwin[:-25])
+		congwinplot = gp.Gnuplot()
+		congwindata = gp.Data(wints[:-25],winwin[:-25])
+		congwinplot.plot(congwindata)
 		
 		
-		rttplot = gp.Gnuplot()
-		rttplot2 = gp.Gnuplot()
-		#rttdatay = gp.Data(rttrtt)
-		
+	
 		#rttplot
+		rttts, rttrtt = tcpCon.getRTT(path = tm.PATH_FORWARD)
+		rttplot = gp.Gnuplot()
+		rttdata = gp.Data(rttts[:-5],rttrtt[:-5])
 		rttplot.plot(rttdata)
-		rttplot2.plot(rttdata2)
+		
+		#Datarate
+		drts, drdr = tcpCon.workRate(limit = 40000000, window=200)
+		drplot = gp.Gnuplot()
+		drdata = gp.Data(drts, drdr)
+		drplot.plot(drdata) 
+		
+		
+		
 		r = raw_input("enter to quit")
 	
 	

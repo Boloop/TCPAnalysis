@@ -247,6 +247,60 @@ class TcpCon(object):
 					
 					
 				
+	def workRate(self, path=PATH_FORWARD, window=4, limit=1*10**6):
+		"""
+		this will try to work out the rate at which we are Tx/Rx packets
+		path = tx or rx
+		window = moving point average/ish (move like convoultion but in the packet values, not time)
+		"""
+		
+		if path == PATH_FORWARD:
+			pkts = self.forward
+		elif path == PATH_BACKWARD:
+			pkts = self.backward
+		else:
+			return None
+			
+		origin = pkts[0][0]
+		
+		speeds = []
+		resultts = []
+		for x in xrange(1, len(pkts)+window):
+			start = x-window
+			end = x
+			
+			if start < 0:
+				start = 0
+			if end >= len(pkts):
+				end = len(pkts)-1
+				
+			
+			
+			pktwindow = pkts[start:end]
+			if len(pktwindow) < 2:
+				continue
+			#sum data
+			s = 0
+			for ts, dat in pktwindow[1:]:
+				s += len(dat)
+				
+			td = pktwindow[-1][0] - pktwindow[0][0]
+			try:
+				speed = s/dfToFloat(td)
+			except:
+				#division by zero? :o
+				continue
+			if speed > limit:
+				speed=limit
+			speeds.append(speed)
+			ts = dfToFloat(pktwindow[-1][0] - origin)
+			resultts.append(ts)
+		
+		return resultts, speeds
+		
+				
+			
+		
 					
 				
 		

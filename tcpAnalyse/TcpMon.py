@@ -14,6 +14,35 @@ DATA_TIMEDATE = 2
 TIME_FIRST = 1
 TIME_LAST = 2
 
+
+optsToString = {dpkt.tcp.TCP_OPT_ALTSUM		:"ALTSUM",
+		dpkt.tcp.TCP_OPT_BUBBA		:"BUBBA",
+		dpkt.tcp.TCP_OPT_CC		:"CC",
+		dpkt.tcp.TCP_OPT_CCECHO		:"CCECHO",
+		dpkt.tcp.TCP_OPT_CCNEW		:"CCNEW",
+		dpkt.tcp.TCP_OPT_CORRUPT	:"CORRUPT",
+		dpkt.tcp.TCP_OPT_ECHO		:"ECHO",
+		dpkt.tcp.TCP_OPT_ECHOREPLY	:"ECHOREPLY",
+		dpkt.tcp.TCP_OPT_EOL		:"EOL",
+		dpkt.tcp.TCP_OPT_MAX		:"MAX",
+		dpkt.tcp.TCP_OPT_MD5		:"MD5",
+		dpkt.tcp.TCP_OPT_MSS		:"MSS",
+		dpkt.tcp.TCP_OPT_NOP		:"NOP",
+		dpkt.tcp.TCP_OPT_POCONN		:"POCONN",
+		dpkt.tcp.TCP_OPT_POSVC		:"POSVC",
+		dpkt.tcp.TCP_OPT_REC		:"REC",
+		dpkt.tcp.TCP_OPT_SACK		:"SACK",
+		dpkt.tcp.TCP_OPT_SACKOK		:"SACKOK",
+		dpkt.tcp.TCP_OPT_SCPS		:"SCPS",
+		dpkt.tcp.TCP_OPT_SKEETER	:"SKEETER",
+		dpkt.tcp.TCP_OPT_SNACK		:"SNACK",
+		dpkt.tcp.TCP_OPT_SNAP		:"SNAP",
+		dpkt.tcp.TCP_OPT_TCPCOMP	:"TCPCOMP",
+		dpkt.tcp.TCP_OPT_TIMESTAMP	:"TIMESTAMP",
+		dpkt.tcp.TCP_OPT_TRAILSUM	:"TRAILSUM",
+		dpkt.tcp.TCP_OPT_WSCALE		:"WSCALE",}
+
+
 def dfToFloat(td):
 	"""
 	Will output a float of the timedelta
@@ -27,6 +56,32 @@ def dfToFloat(td):
 	return result
 	
 	
+
+
+class TCPOptions(object):
+	"""
+	It seems the dkpt library doesn't put the tcp opts in their own class, it has a few flags, and a parsing
+	function, but very limited. This will hopefully automate common tasks
+	"""
+	
+	def __init__(self, data=None):
+		self.options = []
+		
+		if type(data) == type(""):
+			data = dpkt.tcp.parse_opts(data)
+		
+		self.options = data
+	
+	def __str__(self):
+		s = "["
+		for n, x in self.options:
+			s += " "+optsToString[n]+", "
+		
+		s += "]"
+		
+		return s
+				
+
 
 
 class TcpCon(object):
@@ -76,6 +131,60 @@ class TcpCon(object):
 		if ( tcp.sport == self.port2 and tcp.dport == self.port1 ):
 		    	#backward
 		    	self.backward.append((ts, tcp))
+		    	
+	def getHandshake(self):
+		"""
+		This will return (SYN, SYNACK, ACK)
+		"""
+		
+		#First packet must be a Syn
+		tsf = self.forward[0][0]
+		tsb = self.backward[0][0]
+		
+		if   tsf < tsb:
+			synin = PATH_FORWARD
+		elif tsf > tsb:
+			synin = PATH_BACKWARD
+		else:
+			print "forward and backward start timestamps are the same? *ouch headache*"
+			return None, None, None
+		
+		if synin == PATH_FORWARD:
+			synpk = self.forward
+			ackpk = self.backward
+		else:
+			synpk = self.backward
+			ackpk = self.forward
+		
+		syn = None
+		synack = None
+		ack = None
+		
+		
+		#Look for Syn, ACK in synpk (forward usually) list
+		for ts, p in synpk:
+			
+			if p.flags & dpkt.tcp.TH_SYN and not p.flags & dpkt.tcp.TH_ACK:
+				#is Syn
+				syn = (ts, p)
+			elif p.flags & dpkt.tcp.TH_ACK and not p.flags & dpkt.tcp.TH_SYN:
+				#first ACK
+				ack = (ts, p)
+				break
+		
+		#Look for SynACK in ackpk (backward usually) list
+		for ts, p in ackpk:
+		
+			if p.flags & dpkt.tcp.TH_ACK and p.flags & dpkt.tcp.TH_SYN:
+				synack = (ts, p)
+				break
+		
+		return syn, synack, ack
+		
+				
+				
+		
+			
 
 	def getRTT(self, outtype=DATA_FLOAT, grabLatest=True, path=PATH_FORWARD, time=TIME_FIRST):
 		"""

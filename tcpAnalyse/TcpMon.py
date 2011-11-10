@@ -15,6 +15,9 @@ DATA_TIMEDATE = 2
 TIME_FIRST = 1
 TIME_LAST = 2
 
+RELATIVE_ABSOLUTE = 1
+RELATIVE_LASTACK = 2
+
 
 optsToString = {dpkt.tcp.TCP_OPT_ALTSUM		:"ALTSUM",
 		dpkt.tcp.TCP_OPT_BUBBA		:"BUBBA",
@@ -433,6 +436,92 @@ class TcpCon(object):
 		
 				
 			
+	def getRetransmits(self, outtype=DATA_FLOAT, path=PATH_FORWARD, rel=RELATIVE_LASTACK):
+		"""
+		This will return a (ts, segmentnumber, len?)
+		"""
+		
+		timestamps = []
+		segments = []
+		lengths = []
+		
+		if path == PATH_FORWARD:
+			segs = self.forward
+			acks = self.backward
+		else:
+			segs = self.backward
+			acks = self.forward
+		
+		lastSeg = None
+		origin = None
+		
+		for ts, dat in segs:
+			if lastSeg == None:
+				lastSeg = dat.seq
+				origin = ts
+				continue
+			
+			if lastSeg < dat.seq:
+				lastSeg = dat.seq
+				continue
+			
+			#Before!
+			if len(dat.data) == 0:
+				continue
+			
+			timestamps.append(ts)
+			segments.append(dat.seq)
+			lengths.append(len(dat))
+		
+		
+		
+		if rel == RELATIVE_ABSOLUTE:
+			pass
+		elif rel == RELATIVE_LASTACK:
+			#The last ackknowledgement
+			lastack = None
+			lastackTS = None
+			isegs = 0
+			iacks = 0
+			newsegs = []
+			oldlen = len(segments)
+			print "seggy len before", len(segments), segments
+			for seg in segments:
+				
+				
+				#find ack to it
+				while iacks < len(acks):
+					tsa, p = acks[iacks]
+					if tsa > timestamps[isegs]:
+						#just past it, check one before!
+						newsegs.append(seg-lastack)
+						break
+					lastack = p.ack
+					iacks += 1
+				isegs += 1
+			
+			segments = newsegs
+			while oldlen != len(segments):
+				segments.append(0)
+			
+			print "seggy len after", len(segments), segments			
+				
+				
+		
+		if outtype == DATA_FLOAT:
+			newts = []
+			for x in timestamps:
+				ts = x-origin
+				x = dfToFloat(ts)
+				newts.append(x)
+			timestamps = newts		
+					
+		
+		
+		return timestamps, segments, lengths
+	
+	
+		
 		
 					
 				

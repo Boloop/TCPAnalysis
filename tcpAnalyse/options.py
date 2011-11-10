@@ -21,7 +21,7 @@ if __name__ == "__main__":
 		sys.exit()
 	
 	tcpCon = None
-	
+	opts = []
 	while 1:
 		packet = p.nextPack()
 		if not packet:
@@ -51,6 +51,12 @@ if __name__ == "__main__":
 					#print "Yay"
 				else:
 					print "Nay"
+				
+				#new option?
+				a = tm.TCPOptions(ip.data.opts)
+				for n, x in a.options:
+					if not n in opts:
+						opts.append(n)
 	
 	
 	print "File Loaded"
@@ -64,5 +70,8 @@ if __name__ == "__main__":
 	print synack[0], synacko
 	print ack[0], acko	
 	
+	print "options in whole capture:"
+	for n in opts:
+		print tm.optsToString[n], n
 	
 						   

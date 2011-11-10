@@ -4,6 +4,7 @@ This will house a class that will monitor a TCP connection and work out RTT etc.
 
 import dpkt
 import sys
+import struct
 
 PATH_FORWARD = 1
 PATH_BACKWARD = 2
@@ -55,6 +56,25 @@ def dfToFloat(td):
 	
 	return result
 	
+def parseOption(n, d):
+	"""
+	This will convert the data part for option to something we like a little better,
+	like intergets and datetime formats! :)
+	"""	
+	
+	if n == dpkt.tcp.TCP_OPT_WSCALE:
+		return 2**struct.unpack("B", d)[0]
+	
+	if n == dpkt.tcp.TCP_OPT_MSS:
+		return struct.unpack(">H", d)[0]
+	if n == dpkt.tcp.TCP_OPT_TIMESTAMP:
+		a, b = struct.unpack(">II", d)
+		return (a*0.01, b*0.01)
+	
+	if n == dpkt.tcp.TCP_OPT_SACK:
+		print "SACK:", len(d)
+	
+	return None
 	
 
 
@@ -69,20 +89,24 @@ class TCPOptions(object):
 		
 		if type(data) == type(""):
 			data = dpkt.tcp.parse_opts(data)
+			#print data
+		for n, d in data:
+			d = parseOption(n, d)
+			self.options.append( (n, d) )
 		
-		self.options = data
+		#self.options = data
 	
 	def __str__(self):
 		s = "["
 		for n, x in self.options:
-			s += " "+optsToString[n]+", "
+			s += " "+optsToString[n]+":"+str(x)+", "
 		
 		s += "]"
 		
 		return s
 				
 
-
+	
 
 class TcpCon(object):
 	def __init__(self, ip, ts):

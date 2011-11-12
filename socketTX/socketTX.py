@@ -31,6 +31,8 @@ class Server(threading.Thread):
 					#Does it end in FIN?
 					if data[-3:] == "FIN":
 						#Shutdown
+						self.soc.send("\r\n\r\nSFINS")
+						time.sleep(4)
 						self.soc.shutdown(socket.SHUT_RDWR)
 						self.soc.close()
 				
@@ -148,7 +150,24 @@ class Client(threading.Thread):
 				break
 		print self.soc.send("\r\nFIN")
 		print self.soc.send("")
-		print self.soc.shutdown(socket.SHUT_WR)
+		
+		self.soc.setblocking(False)
+		self.soc.settimeout(1)
+		c = 0
+		while True:
+			c +=  1
+			if c > 10:
+				print "Did not get SFINS back!"
+				break
+			try:
+				d = soc.recv(1024)
+				print "got",d
+				if d[-5:] == "SFINS":
+					break
+			except socket.timeout:
+				
+				continue
+			
 		time.sleep(10)
 		print self.soc.close()
 		print "Closed"

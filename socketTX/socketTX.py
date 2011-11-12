@@ -160,7 +160,7 @@ class Client(threading.Thread):
 				print "Did not get SFINS back!"
 				break
 			try:
-				d = soc.recv(1024)
+				d = self.soc.recv(1024)
 				print "got",d
 				if d[-5:] == "SFINS":
 					break
@@ -168,7 +168,7 @@ class Client(threading.Thread):
 				
 				continue
 			
-		time.sleep(10)
+		
 		print self.soc.close()
 		print "Closed"
 	

@@ -454,21 +454,27 @@ class TcpCon(object):
 		
 		lastSeg = None
 		origin = None
+		previousHaveData = None
 		
 		for ts, dat in segs:
 			if lastSeg == None:
 				lastSeg = dat.seq
 				origin = ts
+				previousHaveData = len(dat.data)
 				continue
 			
-			if lastSeg < dat.seq:
+			
+			
+			if lastSeg <= dat.seq:
 				lastSeg = dat.seq
 				continue
 			
 			#Before!
 			if len(dat.data) == 0:
+				print "Found DUPE (nodata)", dat.seq, dat.flags
 				continue
 			
+			print "Found DUPE", dat.seq, dat.flags
 			timestamps.append(ts)
 			segments.append(dat.seq)
 			lengths.append(len(dat))

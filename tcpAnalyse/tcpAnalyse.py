@@ -92,12 +92,14 @@ if __name__ == "__main__":
 		#Congestion Window
 		wints, winwin = tcpCon.unackdPackets()
 		congwinplot = gp.Gnuplot()
-		congwindata = gp.Data(wints[:-3],winwin[:-3], with_="filledcurves")
+		congwinplot.xlabel("time")
+		congwinplot.ylabel("Congestion Window size")
+		congwindata = gp.Data(wints[:-3],winwin[:-3], with_="filledcurves", title="Congestion Window")
 		
 		rtsts, rtsrts, l = tcpCon.getRetransmits()
 		
 		if len(rtsts) != 0:
-			rtsdata = gp.Data(rtsts,rtsrts)
+			rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
 			congwinplot.plot(congwindata, rtsdata)
 		else:
 			congwinplot.plot(congwindata)
@@ -107,12 +109,16 @@ if __name__ == "__main__":
 		#rttplot
 		rttts, rttrtt = tcpCon.getRTT(path = tm.PATH_FORWARD)
 		rttplot = gp.Gnuplot()
+		rttplot.xlabel("time")
+		rttplot.ylabel("Round Trip time")
 		rttdata = gp.Data(rttts[:-3],rttrtt[:-3], with_="lines")
 		rttplot.plot(rttdata)
 		
 		#Datarate
 		drts, drdr = tcpCon.workRate(limit = 40000000, window=200)
 		drplot = gp.Gnuplot()
+		drplot.xlabel("time")
+		drplot.ylabel("Datarate")
 		drdata = gp.Data(drts[:-3], drdr[:-3], with_="lines")
 		drplot.plot(drdata) 
 		

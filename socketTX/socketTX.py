@@ -4,6 +4,7 @@ This will hold classes for transfering data across a TCP connection
 
 import threading
 import socket
+import time
 
 class Server(threading.Thread):
 
@@ -26,6 +27,12 @@ class Server(threading.Thread):
 				
 				try:
 					data = self.soc.recv(2048)
+					
+					#Does it end in FIN?
+					if data[-3:] == "FIN":
+						#Shutdown
+						self.soc.shutdown(socket.SHUT_RDWR)
+						self.soc.close()
 				
 				except socket.timeout:
 					continue
@@ -129,7 +136,7 @@ class Client(threading.Thread):
 			
 			try:
 				
-				self.soc.send(data)
+				print self.soc.send(data)
 			
 			except socket.timeout:
 				continue
@@ -139,8 +146,11 @@ class Client(threading.Thread):
 			if self.totalDataToSend and self.totalDataToSend <= self.totalDataSent:
 			
 				break
-		
-		self.soc.close()
+		print self.soc.send("\r\nFIN")
+		print self.soc.send("")
+		print self.soc.shutdown(socket.SHUT_WR)
+		time.sleep(10)
+		print self.soc.close()
 		print "Closed"
 	
 	def kill(self):

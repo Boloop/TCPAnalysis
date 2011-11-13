@@ -138,7 +138,7 @@ class Client(threading.Thread):
 			
 			try:
 				
-				print self.soc.send(data)
+				self.soc.send(data)
 			
 			except socket.timeout:
 				continue

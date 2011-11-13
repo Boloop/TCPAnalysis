@@ -83,18 +83,26 @@ if __name__ == "__main__":
 	print "File loaded"
 	
 	if tcpCon:
+		#Print stats
 		ipa = strIP(tcpCon.ip1)+":"+str(tcpCon.port1)
 		ipb = strIP(tcpCon.ip2)+":"+str(tcpCon.port2)
 		print ipa+" >>  FORWARD  >> "+ipb
 		print ipa+" <<  BACKWARD << "+ipb
+		count = tcpCon.getPacketCount()
+		drop = count/100
+		drop = 0
+		print "has {0} packets, dropping last {1}".format(count, drop)
+		drop = -1-drop
 		
+		tdata, tdif = tcpCon.getTXRate()
+		print "{0} bytes sent at {1}".format(tdata, tdata/tdif)
 		
 		#Congestion Window
 		wints, winwin = tcpCon.unackdPackets()
 		congwinplot = gp.Gnuplot()
 		congwinplot.xlabel("time")
 		congwinplot.ylabel("Congestion Window size")
-		congwindata = gp.Data(wints[:-3],winwin[:-3], with_="filledcurves", title="Congestion Window")
+		congwindata = gp.Data(wints[:drop],winwin[:drop], with_="filledcurves", title="Congestion Window")
 		
 		rtsts, rtsrts, l = tcpCon.getRetransmits()
 		
@@ -111,7 +119,7 @@ if __name__ == "__main__":
 		rttplot = gp.Gnuplot()
 		rttplot.xlabel("time")
 		rttplot.ylabel("Round Trip time")
-		rttdata = gp.Data(rttts[:-3],rttrtt[:-3], with_="lines")
+		rttdata = gp.Data(rttts[:drop],rttrtt[:drop], with_="lines")
 		rttplot.plot(rttdata)
 		
 		#Datarate
@@ -119,7 +127,7 @@ if __name__ == "__main__":
 		drplot = gp.Gnuplot()
 		drplot.xlabel("time")
 		drplot.ylabel("Datarate")
-		drdata = gp.Data(drts[:-3], drdr[:-3], with_="lines")
+		drdata = gp.Data(drts[:drop], drdr[:drop], with_="lines")
 		drplot.plot(drdata) 
 		
 		

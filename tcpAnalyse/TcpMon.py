@@ -211,7 +211,12 @@ class TcpCon(object):
 				
 				
 		
-			
+	def getPacketCount(self):
+		"""
+		Will return the number of packets held for this connection
+		"""
+		
+		return len(self.forward)+len(self.backward)
 
 	def getRTT(self, outtype=DATA_FLOAT, grabLatest=True, path=PATH_FORWARD, time=TIME_FIRST):
 		"""
@@ -434,8 +439,44 @@ class TcpCon(object):
 		
 		return resultts, speeds
 		
-				
+	def getTXRate(self, path=PATH_FORWARD):
+		"""
+		Will return tuple for Datasent, and td of first and last data sent
+		"""
+		
+		if path == PATH_FORWARD:
+			segs = self.forward
+			acks = self.backward
+		else:
+			segs = self.backward
+			acks = self.forward
+		
+		fts = None
+		lts = None
+		fseq = None
+		lseq = None
+		tdata = None
+		
+		for ts, p in segs:
+			if len(p.data) == 0:
+				continue
 			
+			if fseq == None:
+				fseq = p.seq
+				fts =  ts
+			
+				lseq = fseq
+				lts = fts
+				tdata = len(p.data)
+			
+			if p.seq > lseq:
+				lseq = p.seq
+				tdata += len(p.data)
+				lts = ts
+		
+		return tdata, dfToFloat(lts-fts)
+				
+							
 	def getRetransmits(self, outtype=DATA_FLOAT, path=PATH_FORWARD, rel=RELATIVE_LASTACK):
 		"""
 		This will return a (ts, segmentnumber, len?)
@@ -471,10 +512,10 @@ class TcpCon(object):
 			
 			#Before!
 			if len(dat.data) == 0:
-				print "Found DUPE (nodata)", dat.seq, dat.flags
+				#print "Found DUPE (nodata)", dat.seq, dat.flags
 				continue
 			
-			print "Found DUPE", dat.seq, dat.flags
+			#print "Found DUPE", dat.seq, dat.flags
 			timestamps.append(ts)
 			segments.append(dat.seq)
 			lengths.append(len(dat))
@@ -491,7 +532,7 @@ class TcpCon(object):
 			iacks = 0
 			newsegs = []
 			oldlen = len(segments)
-			print "seggy len before", len(segments), segments
+			#print "seggy len before", len(segments), segments
 			for seg in segments:
 				
 				
@@ -510,7 +551,7 @@ class TcpCon(object):
 			while oldlen != len(segments):
 				segments.append(0)
 			
-			print "seggy len after", len(segments), segments			
+			#print "seggy len after", len(segments), segments			
 				
 				
 		

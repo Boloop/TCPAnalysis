@@ -103,6 +103,9 @@ if __name__ == "__main__":
 		print "Has {0} flagged ECE bits".format(ecenum)
 		cwrnum = tcpCon.countFlags(dpkt.tcp.TH_CWR)
 		print "Has {0} flagged CWR bits".format(ecenum)
+		
+		#sN = tcpCon.getSACKs()
+		#print "Has {0} SACK opt'ed packs".format(sN)
 		#sys.exit()
 		
 		#Congestion Window
@@ -114,9 +117,41 @@ if __name__ == "__main__":
 		
 		rtsts, rtsrts, l = tcpCon.getRetransmits()
 		
+		#Santa has a sack (of toys)
+		sacks = tcpCon.getSACKs()
+		sacksackts = []
+		sacksack = []
+		sackendts = []
+		sackend = []
+		segsize = 1388
+		for ts, ack, segs in sacks:
+			unacks = segs[0]
+			unacksegs = unacks/segsize
+			if unacksegs < 1:
+				unacksegs = 0
+			#add unacks
+			for x in xrange(0, unacksegs):
+				sacksackts.append(ts)
+				sacksack.append(x*segsize)
+			#addlatest ack'd
+			sackendts.append(ts)
+			sackend.append(segs[-1])
+		
+		
+			
+		
 		if len(rtsts) != 0:
-			rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
-			congwinplot.plot(congwindata, rtsdata)
+			if len(sacksack) != 0:
+				
+				rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
+				sackdata = gp.Data(sacksackts, sacksack, title = "SACKs")
+				sackenddata = gp.Data(sackendts, sackend, title = "SACKEnd")
+				
+				congwinplot.plot(congwindata, rtsdata, sackdata, sackenddata)
+				#congwinplot.plot(congwindata, rtsdata, sackdata)
+			else:
+				rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
+				congwinplot.plot(congwindata, rtsdata)
 		else:
 			congwinplot.plot(congwindata)
 			

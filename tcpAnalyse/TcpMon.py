@@ -75,7 +75,12 @@ def parseOption(n, d):
 		return (a*0.01, b*0.01)
 	
 	if n == dpkt.tcp.TCP_OPT_SACK:
-		print "SACK:", len(d)
+		#can be variable lengh
+		res = []
+		for i in xrange(0, len(d)/4):
+			a = struct.unpack(">I", d[i:i+4])[0]
+			res.append(a)
+		return tuple(res)
 	
 	return None
 	
@@ -89,6 +94,7 @@ class TCPOptions(object):
 	
 	def __init__(self, data=None):
 		self.options = []
+		
 		
 		if type(data) == type(""):
 			data = dpkt.tcp.parse_opts(data)
@@ -107,6 +113,29 @@ class TCPOptions(object):
 		s += "]"
 		
 		return s
+	
+	def get(self, opt, index=0):
+		"""
+		This will get data for an option in the list
+		"""
+		i = 0
+		for n, d in self.options:
+			if n == opt:
+				if i == index:
+					return d
+				i += 1
+		return None
+	
+	def __contains__(self,opt):
+		"""
+		Will see if an option is in
+		"""
+		for n, d in self.options:
+			if n == opt:
+				return True
+		return False
+		
+		
 				
 
 	
@@ -619,9 +648,42 @@ class TcpCon(object):
 			print rml, "remove", len(l)
 			for rm in rml:
 				l.pop(rm)
-		
 	
+	
+	def getSACKs(self, outtype=DATA_FLOAT, path=PATH_BACKWARD, rel=RELATIVE_LASTACK):
+		"""
+		This will return a list of SACKs of when and what?
 		
+		(ts, ack, (segs,))
+		"""
+		
+		sackpacks = []
+		
+		if path == PATH_BACKWARD:
+			pkts = self.backward
+		else:
+			pkts = self.forward
+		
+		for ts, p in pkts:
+			if outtype == DATA_FLOAT:
+				ts = ts-self.origin
+				ts = dfToFloat(ts)
+			
+			opts = TCPOptions(p.opts)
+			
+			if dpkt.tcp.TCP_OPT_SACK in opts:
+				segs =  opts.get(dpkt.tcp.TCP_OPT_SACK)
+				if rel == RELATIVE_LASTACK:
+					nsegs = []
+					for s in segs:
+						nsegs.append(s-p.ack)
+					print "oldsegs", segs
+					print "newsegs", nsegs
+					segs = tuple(nsegs)
+				
+				sackpacks.append( (ts, p.ack, segs) )
+		
+		return sackpacks
 		
 					
 				

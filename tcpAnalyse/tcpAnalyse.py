@@ -83,6 +83,9 @@ if __name__ == "__main__":
 	print "File loaded"
 	
 	if tcpCon:
+	
+		tcpCon.setOrigin()
+		tcpCon.removeFIN()
 		#Print stats
 		ipa = strIP(tcpCon.ip1)+":"+str(tcpCon.port1)
 		ipb = strIP(tcpCon.ip2)+":"+str(tcpCon.port2)
@@ -95,7 +98,12 @@ if __name__ == "__main__":
 		drop = -1-drop
 		
 		tdata, tdif = tcpCon.getTXRate()
-		print "{0} bytes sent at {1}".format(tdata, tdata/tdif)
+		print "{0} bytes sent over {1}secs at {2}bytes/sec".format(tdata, tdif, tdata/tdif)
+		ecenum = tcpCon.countFlags(dpkt.tcp.TH_ECE)
+		print "Has {0} flagged ECE bits".format(ecenum)
+		cwrnum = tcpCon.countFlags(dpkt.tcp.TH_CWR)
+		print "Has {0} flagged CWR bits".format(ecenum)
+		#sys.exit()
 		
 		#Congestion Window
 		wints, winwin = tcpCon.unackdPackets()

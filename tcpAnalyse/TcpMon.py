@@ -124,7 +124,23 @@ class TcpCon(object):
 		
 		self.forward = [(ts, ip.data)]
 		self.backward = []
+		
+		self.origin = None
 	
+	def setOrigin(self):
+		"""
+		This will set up the time origin, be the easiliest of the two first packets
+		in the forward and backward lists
+		"""
+		
+		
+		self.origin = self.forward[0][0]
+		
+		if self.origin > self.backward[0][0]:
+			self.origin = self.backward[0][0]
+		
+		
+		
 	def sameSocket(self, ip):
 		"""
 		Will return true or false if this is the same multiplexed connection this 
@@ -281,7 +297,7 @@ class TcpCon(object):
 				if r == lastack or r+1 == lastack:
 					
 					if originTS == None:
-						originTS = sts
+						originTS = self.origin
 					#Got it bitch!
 					td = ts - sts
 					
@@ -354,7 +370,7 @@ class TcpCon(object):
 				if lastSeq == None:
 					lastSeq = dat.seq+len(dat.data)
 					lastAck = dat.seq
-					timeOrigin = ts
+					timeOrigin = self.origin
 					
 				
 				elif lastSeq < dat.seq:
@@ -402,7 +418,7 @@ class TcpCon(object):
 		else:
 			return None
 			
-		origin = pkts[0][0]
+		origin = self.origin
 		
 		speeds = []
 		resultts = []
@@ -567,6 +583,43 @@ class TcpCon(object):
 		
 		return timestamps, segments, lengths
 	
+	def countFlags(self, flag, path=PATH_BACKWARD):
+		"""
+		This will count the number of ECE flagged packets
+		"""
+		
+		if path == PATH_BACKWARD:
+			pkts = self.backward
+		else:
+			pkts = self.forward
+		
+		count = 0
+		for ts, p in pkts:
+			if p.flags & flag:
+				count += 1
+		
+		return count
+	
+	def removeFIN(self):
+		"""
+		This will remove the fin handshakes in both paths
+		"""
+		
+		for l in [self.forward, self.backward]:
+			rml = []
+			i = 0
+			for ts, p in l:
+				if p.flags & dpkt.tcp.TH_FIN:
+					#it has
+					rml.append(i)
+				i += 1
+			
+			#remove
+			rml.reverse()
+			print rml, "remove", len(l)
+			for rm in rml:
+				l.pop(rm)
+		
 	
 		
 		

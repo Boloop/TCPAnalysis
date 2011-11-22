@@ -58,7 +58,19 @@ def dfToFloat(td):
 	
 	
 	return result
-	
+
+hexStrDic = {0:"0", 1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6", 7:"7", 8:"8", 9:"9", 10:"A", 11:"B", 12:"C", 13:"D", 14:"E", 15:"F"}
+
+def hexStr(s):
+	result = ""
+	for x in s:
+		x = ord(x)
+		a = x/16
+		b = x%16
+		
+		result += "0x" + hexStrDic[a] + hexStrDic[b]
+	return result
+		
 def parseOption(n, d):
 	"""
 	This will convert the data part for option to something we like a little better,
@@ -78,8 +90,11 @@ def parseOption(n, d):
 		#can be variable lengh
 		res = []
 		for i in xrange(0, len(d)/4):
-			a = struct.unpack(">I", d[i:i+4])[0]
+			a = struct.unpack(">I", d[4*i:4*i+4])[0]
+			#print "where a", a, "from", hexStr(d[i:i+4])
 			res.append(a)
+		
+		#print "This:"+hexStr(d)+ "to " + str(res)
 		return tuple(res)
 	
 	return None
@@ -677,8 +692,9 @@ class TcpCon(object):
 					nsegs = []
 					for s in segs:
 						nsegs.append(s-p.ack)
-					print "oldsegs", segs
-					print "newsegs", nsegs
+					#print "ts,ack", ts, p.ack
+					#print "oldsegs", segs
+					#print "newsegs", nsegs
 					segs = tuple(nsegs)
 				
 				sackpacks.append( (ts, p.ack, segs) )

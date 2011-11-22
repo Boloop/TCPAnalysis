@@ -363,7 +363,89 @@ class TcpCon(object):
 		
 				
 		return (timestamp, rttvals)
-					
+	
+	def getRTTbyTS(self, outtype=DATA_FLOAT, path=PATH_FORWARD):
+		"""
+		This will use the timestamps (if there) to work out the round trip time
+		this should hopefully get around the dup ack/retransmit problem
+		"""
+		
+		if path == PATH_FORWARD:
+			ldata = self.forward
+			lack = self.backward
+		else:
+			lack = self.forward
+			ldata = self.backward
+		
+		rtt = []
+		times = []
+		
+		lastsentTS = None # float of TCP ts
+		lastsentTSsent = None #datetime of pcap TS
+		i = 0
+		for ts, p in lack:
+			#Grab the timestamp!
+			
+			
+			opts = TCPOptions(p.opts)
+			pktts = opts.get(dpkt.tcp.TCP_OPT_TIMESTAMP)
+			
+			if pktts == None:
+				print "Na1"
+				continue
+			
+			if lastsentTS == None:
+				lastsentTS = pktts[1]
+				lastsentTSsent = ts
+				continue
+			
+			if lastsentTS > pktts[1]:
+				print "hey"
+				continue
+			lastsentTS = pktts[1]
+			lastsentTSsent = ts
+			
+			#for each one find corrisponding one?
+			
+			while i < len(ldata):
+				
+				tss, ps = ldata[i]
+				
+				optss = TCPOptions(ps.opts)
+				pkttss = optss.get(dpkt.tcp.TCP_OPT_TIMESTAMP)
+				
+				if pkttss == None:
+					print "Na2", i
+					i += 1
+					continue
+				if pkttss[0] < pktts[1]:
+					i += 1
+					continue
+				
+				td = ts - tss # Pcap of sent+echo TS dif
+				time = ts - self.origin #pcap to origin
+				if outtype == DATA_FLOAT:
+						
+						time = dfToFloat(time)
+				print "Added", i
+				rtt.append(dfToFloat(td))
+				times.append(time)
+				
+				break
+			
+			
+			if i >= len(ldata):
+				print "Empty!"
+				break
+		print type(times[0]), type(rtt[0])
+		return times, rtt
+			
+			
+			
+			
+			
+				
+			
 				
 	def unackdPackets(self, outtype=DATA_FLOAT):
 		"""

@@ -49,6 +49,7 @@ if __name__ == "__main__":
 	
 	showCong = hasFlag("-cong", args)
 	showRTT = hasFlag("-rtt", args)
+	showRTTTS = hasFlag("-rttts", args)
 	showDataTX = hasFlag("-data", args)
 		
 		
@@ -192,6 +193,15 @@ if __name__ == "__main__":
 			rttplot.ylabel("Round Trip time")
 			rttdata = gp.Data(rttts[:drop],rttrtt[:drop], with_="lines")
 			rttplot.plot(rttdata)
+		
+		if showRTTTS:
+			#rtttsplot by timestamps
+			rtttsts, rtttsrtt = tcpCon.getRTTbyTS(path = tm.PATH_FORWARD)
+			rtttsplot = gp.Gnuplot()
+			rtttsplot.xlabel("time")
+			rtttsplot.ylabel("Round Trip time by TS")
+			rtttsdata = gp.Data(rtttsts[:drop],rtttsrtt[:drop], with_="lines")
+			rtttsplot.plot(rtttsdata)
 		
 		if showDataTX:
 			#Datarate

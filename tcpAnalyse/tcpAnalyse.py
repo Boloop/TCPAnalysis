@@ -12,6 +12,14 @@ def strIP(ipadd):
 	a,b,c,d = struct.unpack("BBBB", ipadd)
 	return str(a)+"."+str(b)+"."+str(c)+"."+str(d)
 
+def hasFlag(flag, args):
+	"""
+	This will return a boolean if the flag is present in the list.
+	"""
+	
+	return flag in args
+
+
 def tcpStat(tcp):
 	"""
 	Will return a string of stat info
@@ -25,7 +33,26 @@ def tcpStat(tcp):
 	return "S:"+str(tcp.seq)+" A:"+str(tcp.ack)+" "+sa+" len:"+str(len(tcp.data))
 
 if __name__ == "__main__":
-	path = sys.argv[1]
+
+
+	if hasFlag("-h", sys.argv[1:]):
+		print "Help!"
+		print " -cong        show congestion"
+		print " -rtt         show round trip time"
+		print " -data        show dataTXrate/throughoutput"
+		sys.exit()
+	
+	if len(sys.argv) < 2:
+		print "Please ensure you have got [path]"
+		sys.exit()
+	args = sys.argv[1:-1]
+	
+	showCong = hasFlag("-cong", args)
+	showRTT = hasFlag("-rtt", args)
+	showDataTX = hasFlag("-data", args)
+		
+		
+	path = sys.argv[-1]
 	
 	p = pcr.PcapRead()
 	if not p.open(path):
@@ -108,70 +135,72 @@ if __name__ == "__main__":
 		#print "Has {0} SACK opt'ed packs".format(sN)
 		#sys.exit()
 		
-		#Congestion Window
-		wints, winwin = tcpCon.unackdPackets()
-		congwinplot = gp.Gnuplot()
-		congwinplot.xlabel("time")
-		congwinplot.ylabel("Congestion Window size")
-		congwindata = gp.Data(wints[:drop],winwin[:drop], with_="filledcurves", title="Congestion Window")
+		if showCong:
+			#Congestion Window
+			wints, winwin = tcpCon.unackdPackets()
+			congwinplot = gp.Gnuplot()
+			congwinplot.xlabel("time")
+			congwinplot.ylabel("Congestion Window size")
+			congwindata = gp.Data(wints[:drop],winwin[:drop], with_="filledcurves", title="Congestion Window")
 		
-		rtsts, rtsrts, l = tcpCon.getRetransmits()
+			rtsts, rtsrts, l = tcpCon.getRetransmits()
 		
-		#Santa has a sack (of toys)
-		sacks = tcpCon.getSACKs()
-		sacksackts = []
-		sacksack = []
-		sackendts = []
-		sackend = []
-		segsize = 1388
-		for ts, ack, segs in sacks:
-			unacks = segs[0]
-			unacksegs = unacks/segsize
-			if unacksegs < 1:
-				unacksegs = 0
-			#add unacks
-			for x in xrange(0, unacksegs):
-				sacksackts.append(ts)
-				sacksack.append(x*segsize)
-			#addlatest ack'd
-			sackendts.append(ts)
-			sackend.append(segs[-1])
+			#Santa has a sack (of toys)
+			sacks = tcpCon.getSACKs()
+			sacksackts = []
+			sacksack = []
+			sackendts = []
+			sackend = []
+			segsize = 1388
+			for ts, ack, segs in sacks:
+				unacks = segs[0]
+				unacksegs = unacks/segsize
+				if unacksegs < 1:
+					unacksegs = 0
+				#add unacks
+				for x in xrange(0, unacksegs):
+					sacksackts.append(ts)
+					sacksack.append(x*segsize)
+				#addlatest ack'd
+				sackendts.append(ts)
+				sackend.append(segs[-1])
 		
 		
 			
 		
-		if len(rtsts) != 0:
-			if len(sacksack) != 0:
+			if len(rtsts) != 0:
+				if len(sacksack) != 0:
 				
-				rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
-				sackdata = gp.Data(sacksackts, sacksack, title = "SACKs")
-				sackenddata = gp.Data(sackendts, sackend, title = "SACKEnd")
+					rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
+					sackdata = gp.Data(sacksackts, sacksack, title = "SACKs")
+					sackenddata = gp.Data(sackendts, sackend, title = "SACKEnd")
 				
-				congwinplot.plot(congwindata, rtsdata, sackdata, sackenddata)
-				#congwinplot.plot(congwindata, rtsdata, sackdata)
+					congwinplot.plot(congwindata, rtsdata, sackdata, sackenddata)
+					#congwinplot.plot(congwindata, rtsdata, sackdata)
+				else:
+					rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
+					congwinplot.plot(congwindata, rtsdata)
 			else:
-				rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
-				congwinplot.plot(congwindata, rtsdata)
-		else:
-			congwinplot.plot(congwindata)
+				congwinplot.plot(congwindata)
 			
 		
-	
-		#rttplot
-		rttts, rttrtt = tcpCon.getRTT(path = tm.PATH_FORWARD)
-		rttplot = gp.Gnuplot()
-		rttplot.xlabel("time")
-		rttplot.ylabel("Round Trip time")
-		rttdata = gp.Data(rttts[:drop],rttrtt[:drop], with_="lines")
-		rttplot.plot(rttdata)
+		if showRTT:
+			#rttplot
+			rttts, rttrtt = tcpCon.getRTT(path = tm.PATH_FORWARD)
+			rttplot = gp.Gnuplot()
+			rttplot.xlabel("time")
+			rttplot.ylabel("Round Trip time")
+			rttdata = gp.Data(rttts[:drop],rttrtt[:drop], with_="lines")
+			rttplot.plot(rttdata)
 		
-		#Datarate
-		drts, drdr = tcpCon.workRate(limit = 40000000, window=200)
-		drplot = gp.Gnuplot()
-		drplot.xlabel("time")
-		drplot.ylabel("Datarate")
-		drdata = gp.Data(drts[:drop], drdr[:drop], with_="lines")
-		drplot.plot(drdata) 
+		if showDataTX:
+			#Datarate
+			drts, drdr = tcpCon.workRate(limit = 40000000, window=200)
+			drplot = gp.Gnuplot()
+			drplot.xlabel("time")
+			drplot.ylabel("Datarate")
+			drdata = gp.Data(drts[:drop], drdr[:drop], with_="lines")
+			drplot.plot(drdata) 
 		
 		
 		

@@ -44,6 +44,7 @@ public:
 	bool open();
 	void Execute();
 	void kill();
+	pcap_t* givePcap();
 
 	void bridgeWith(InterfaceOutput::InterfaceOutput*);
 

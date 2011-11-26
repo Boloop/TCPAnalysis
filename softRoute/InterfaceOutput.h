@@ -34,6 +34,7 @@ public:
 	InterfaceOutput(char*);
 	void inject(u_char*, int);
 	bool open();
+	void usePcap(pcap_t*);
 
 
 	virtual ~InterfaceOutput();

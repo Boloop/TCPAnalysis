@@ -34,8 +34,15 @@ bool InterfaceOutput::open()
 	}
 	return true;
 
+}
 
+void InterfaceOutput::usePcap(pcap_t* pcap)
+{
+	/*
+	 * Will be given an ALREADY OPEN pcap_t handler
+	 */
 
+	m_pDev = pcap;
 
 }
 

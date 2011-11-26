@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 	InterfaceInput::InterfaceInput* devLisOne = new InterfaceInput::InterfaceInput(devOne);
 	InterfaceOutput::InterfaceOutput* devInjOne = new InterfaceOutput::InterfaceOutput(devOne);
 	InterfaceInput::InterfaceInput* devLisTwo = new InterfaceInput::InterfaceInput(devTwo);
-		InterfaceOutput::InterfaceOutput* devInjTwo = new InterfaceOutput::InterfaceOutput(devTwo);
+	InterfaceOutput::InterfaceOutput* devInjTwo = new InterfaceOutput::InterfaceOutput(devTwo);
 
 	if(!devLisOne->open())
 	{
@@ -47,8 +47,12 @@ int main(int argc, char **argv)
 		printf("Now Opened Input %s\n", devLisName);
 	}
 
-	devInjOne->open();
-	devInjTwo->open();
+	//devInjOne->open();
+	//devInjTwo->open();
+
+	devInjOne->usePcap(devLisOne->givePcap());
+	devInjTwo->usePcap(devLisTwo->givePcap());
+
 
 	devLisOne->bridgeWith(devInjTwo);
 	devLisTwo->bridgeWith(devInjOne);

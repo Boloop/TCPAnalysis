@@ -43,6 +43,16 @@ bool InterfaceInput::open()
 
 }
 
+pcap_t* InterfaceInput::givePcap()
+{
+
+	/*
+	 * This will give out the handler, best after it's open ;)
+	 */
+	return m_pDev;
+
+}
+
 void InterfaceInput::Execute()
 {
 	/*

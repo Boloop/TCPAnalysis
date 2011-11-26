@@ -1,68 +1,79 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pcap.h>  /* GIMME a libpcap plz! */
-#include <errno.h>
-extern "C" {
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-}
+
+#include <time.h>
+#include <unistd.h>
+
+#include "InterfaceInput.h"
+#include "InterfaceOutput.h"
+
 
 int main(int argc, char **argv)
 {
- 	char *dev; /* name of the device to use */ 
- 	char *net; /* dot notation of the network address */
- 	char *mask;/* dot notation of the network mask    */
- 	int ret;   /* return code */
- 	char errbuf[PCAP_ERRBUF_SIZE];
- 	bpf_u_int32 netp; /* ip          */
- 	bpf_u_int32 maskp;/* subnet mask */
- 	struct in_addr addr;
- 	
- 	pcap_if_t *devlist;
 
- 	//int pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
-  	
-  	ret = pcap_findalldevs(&devlist, errbuf);
-  	
-  	if(ret == -1){
-  		//error :(
-  		printf("Error, could not enumerate devs: %s\n", errbuf);
-  		exit(-1);
-  	}
-  	
-  	if (devlist == NULL)
-  	{
-  		printf("Error, could not see any available devs\n");
-  		exit(-1);
-  	}
-  	
-  	pcap_if_t *pdev = devlist;
-  	
-  	while(pdev != NULL)
-  	{
-  		printf("%s\n", pdev->name);
-  		if (pdev->description != NULL)
-  			printf("\t%s\n", pdev->description);
-  			
-  		if (pdev->addresses != NULL)
-  		{
-  			printf("\tHasaddesses\n");
-  			pcap_addr_t *padd = pdev->addresses;
-  			
-  			while(padd != NULL)
-  			{
-  				//net = inet_ntop(padd->addr);
-  				if (padd->addr->sa_family == AF_INET)
-  					inet_ntop(AF_INET, padd->addr->sa_data, net, INET_ADDRSTRLEN);
-  				else if (padd->addr->sa_family == AF_INET6)
-  					inet_ntop(AF_INET6, padd->addr->sa_data, net, INET6_ADDRSTRLEN);
-  				printf("\t%s\n", net);
-  				padd = padd->next;
-  			}
-  		}
-  		pdev = pdev->next;
-  	}
-  	
+  	//InterfaceInput::printDevs();
+
+	if(argc < 3)
+	{
+		fprintf(stderr, "Please use [ethX] [ethY] to bridge\n");
+		return -1;
+	}
+
+	char* devOne = argv[1];
+	char* devTwo = argv[2];
+
+
+	char* devLisName = "eth0";
+
+	InterfaceInput::InterfaceInput* devLisOne = new InterfaceInput::InterfaceInput(devOne);
+	InterfaceOutput::InterfaceOutput* devInjOne = new InterfaceOutput::InterfaceOutput(devOne);
+	InterfaceInput::InterfaceInput* devLisTwo = new InterfaceInput::InterfaceInput(devTwo);
+		InterfaceOutput::InterfaceOutput* devInjTwo = new InterfaceOutput::InterfaceOutput(devTwo);
+
+	if(!devLisOne->open())
+	{
+		//Failed :(
+		return -1;
+	}
+	else
+	{
+		printf("Now Opened Input %s\n", devLisName);
+	}
+
+	if(!devLisTwo->open())
+	{
+		return -1;
+	}
+	else
+	{
+		printf("Now Opened Input %s\n", devLisName);
+	}
+
+	devInjOne->open();
+	devInjTwo->open();
+
+	devLisOne->bridgeWith(devInjTwo);
+	devLisTwo->bridgeWith(devInjOne);
+
+	printf("Listening for 10 seconds\n");
+
+	devLisOne->Start();
+	devLisTwo->Start();
+	struct timespec t;
+	t.tv_sec = 10;
+	t.tv_nsec = 0;
+
+	//nanosleep(&t);
+	usleep(10000000);
+	printf ("Killing\n");
+	devLisOne->kill();
+	devLisTwo->kill();
+
+	devLisOne->Join();
+	devLisTwo->Join();
+
+	delete devLisOne;
+	delete devInjOne;
+	delete devLisTwo;
+	delete devInjTwo;
+
   	return 0;
 }

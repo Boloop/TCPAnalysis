@@ -11,22 +11,49 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pcap.h>  /* GIMME a libpcap plz! */
 #include <errno.h>
+extern "C" {
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
 
+	#include <pthread.h>
+}
 
-class InterfaceInput {
+#include "MyThread.h"
+#include "InterfaceOutput.h"
+
+class InterfaceInput: public MyThread {
 private:
-	char  		*m_sInterface;
-	char 		*m_sErrBuf;
-	pcap_t 		*m_pDev;
+	char  				*m_sInterface;
+	char 				*m_sErrBuf;
+	pcap_t 				*m_pDev;
 
+	uint32_t 			m_nPackets;
+	uint32_t 			m_nPData;
+
+	bool				 m_bIsDead;
+	pthread_mutex_t 	 m_lock;
+
+	InterfaceOutput::InterfaceOutput *m_pBridgeOutput;
 
 public:
 	InterfaceInput(char*);
 	bool open();
+	void Execute();
+	void kill();
+
+	void bridgeWith(InterfaceOutput::InterfaceOutput*);
 
 	virtual ~InterfaceInput();
+
+
+
+	static void gotPacket(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+
+	static void printDevs();
 };
 
 #endif /* INTERFACEINPUT_H_ */

@@ -207,7 +207,7 @@ void InterfaceInput::gotPacket(u_char *args, const struct pcap_pkthdr *header, c
 	InterfaceInput* self = (InterfaceInput*) args;
 	//printf("GP : %n\n", (int)header->len);
 
-	printf("GP: %d %s %d\n", ++self->m_nPackets, self->m_sInterface, header->len);
+	//printf("GP: %d %s %d\n", ++self->m_nPackets, self->m_sInterface, header->len);
 	self->m_nPData += header->len;
 	//printf("Got\n");
 

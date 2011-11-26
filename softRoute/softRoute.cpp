@@ -1,6 +1,8 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <string>
+#include <iostream>
 
 #include "InterfaceInput.h"
 #include "InterfaceOutput.h"
@@ -59,7 +61,7 @@ int main(int argc, char **argv)
 	devLisOne->bridgeWith(devInjTwo);
 	devLisTwo->bridgeWith(devInjOne);
 
-	printf("Listening for 10 seconds\n");
+	//printf("Listening for 10 seconds\n");
 
 	devLisOne->Start();
 	devLisTwo->Start();
@@ -68,7 +70,14 @@ int main(int argc, char **argv)
 	t.tv_nsec = 0;
 
 	//nanosleep(&t);
-	usleep(10000000);
+	//usleep(10000000);
+
+
+	std::string userinput;
+
+	std::cout << "Press Enter to Quit" << std::endl;
+	std::cin >> userinput;
+
 	printf ("Killing\n");
 	devLisOne->kill();
 	devLisTwo->kill();

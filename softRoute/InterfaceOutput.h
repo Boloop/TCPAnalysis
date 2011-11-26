@@ -29,10 +29,12 @@ private:
 	char  				*m_sInterface;
 	char 				*m_sErrBuf;
 	pcap_t 				*m_pDev;
+	bool				 m_bInjectWithBroadcast;
 
 public:
 	InterfaceOutput(char*);
 	void inject(u_char*, int);
+	void setBroadcast(bool);
 	bool open();
 	void usePcap(pcap_t*);
 

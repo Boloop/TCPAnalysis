@@ -15,6 +15,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_sErrBuf = (char*)malloc(PCAP_ERRBUF_SIZE);
 	m_pDev = NULL;
 	m_sInterface = interface;
+	m_bInjectWithBroadcast = false;
 
 
 }
@@ -46,12 +47,24 @@ void InterfaceOutput::usePcap(pcap_t* pcap)
 
 }
 
+void InterfaceOutput::setBroadcast(bool val)
+{
+	/*
+	 * Append FF:FF:FF:FF:FF:FF to destination address on all injections?
+	 */
+
+	m_bInjectWithBroadcast = val;
+}
+
 void InterfaceOutput::inject(u_char* data, int len)
 {
 	/*
 	 * Will inject the data! :D
 	 */
-
+	if(m_bInjectWithBroadcast)
+	{
+		memset(data+6, 0xFF, 6);
+	}
 	pcap_inject(m_pDev, (void*)data, len);
 }
 

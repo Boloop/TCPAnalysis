@@ -53,6 +53,8 @@ int main(int argc, char **argv)
 	devInjOne->usePcap(devLisOne->givePcap());
 	devInjTwo->usePcap(devLisTwo->givePcap());
 
+	devInjOne->setBroadcast(true);
+	devInjTwo->setBroadcast(true);
 
 	devLisOne->bridgeWith(devInjTwo);
 	devLisTwo->bridgeWith(devInjOne);

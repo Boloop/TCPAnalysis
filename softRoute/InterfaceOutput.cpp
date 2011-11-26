@@ -63,7 +63,7 @@ void InterfaceOutput::inject(u_char* data, int len)
 	 */
 	if(m_bInjectWithBroadcast)
 	{
-		memset(data+6, 0xFF, 6);
+		memset(data, 0xFF, 6);
 	}
 	pcap_inject(m_pDev, (void*)data, len);
 }

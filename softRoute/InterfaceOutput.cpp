@@ -79,9 +79,27 @@ void InterfaceOutput::inject(u_char* data, int len)
 	{
 		if (len >= 12)
 		{
-			printf("OUTPUTTUNG %s Des: %02X:%02X:%02X:%02X:%02X:%02X Src %02X:%02X:%02X:%02X:%02X:%02X\n",
-					m_sInterface, data[0], data[1], data[2], data[3], data[4] ,data[5] ,data[6] ,data[7] ,
-					data[8], data[9], data[10], data[11]);
+			WTPacket pack((char*)data, len);
+			if(!pack.process())
+			{
+				printf("OUTPUTTUNG %s Did not understand packet\n", m_sInterface);
+			}
+			else
+			{
+				if (!pack.m_bIPv4)
+				{
+					printf("OUTPUTTUNG %s Des: %02X:%02X:%02X:%02X:%02X:%02X Src %02X:%02X:%02X:%02X:%02X:%02X\n",
+										m_sInterface, data[0], data[1], data[2], data[3], data[4] ,data[5] ,data[6] ,data[7] ,
+										data[8], data[9], data[10], data[11]);
+				}
+				else
+				{
+					printf("OUTPUTTUNG %s Des: %d.%d.%d.%d Src: %d.%d.%d.%d\n", m_sInterface,
+							pack.m_pMacDst[0], pack.m_pMacDst[1], pack.m_pMacDst[2], pack.m_pMacDst[3],
+							pack.m_pMacSrc[0], pack.m_pMacSrc[1], pack.m_pMacSrc[2], pack.m_pMacSrc[3]);
+				}
+			}
+
 		}
 		else
 		{

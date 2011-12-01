@@ -22,7 +22,7 @@ extern "C" {
 	#include <pthread.h>
 }
 
-
+#include "WTPacket.h"
 
 class InterfaceOutput {
 private:

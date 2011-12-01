@@ -94,7 +94,7 @@ void InterfaceOutput::inject(u_char* data, int len)
 				}
 				else
 				{
-					printf("OUTPUTTUNG %s Des: %d.%d.%d.%d Src: %d.%d.%d.%d\n", m_sInterface,
+					printf("OUTPUTTUNG %s Des: %d.%d.%d.%d Src:  %d.%d.%d.%d\n", m_sInterface,
 							pack.m_pIPAddrDst[0], pack.m_pIPAddrDst[1], pack.m_pIPAddrDst[2], pack.m_pIPAddrDst[3],
 							pack.m_pIPAddrSrc[0], pack.m_pIPAddrSrc[1], pack.m_pIPAddrSrc[2], pack.m_pIPAddrSrc[3]);
 				}

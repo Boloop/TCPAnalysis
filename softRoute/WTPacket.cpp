@@ -31,20 +31,23 @@ bool WTPacket::process()
 	m_pMacDst = m_pFrame;
 	m_pMacSrc = m_pFrame+6;
 
-	if(m_pFrame[6] == 0x08 && m_pFrame[7] == 0x00)
+	if(m_pFrame[12] == 0x08 && m_pFrame[13] == 0x00)
 	{
 		m_bIPv4 = true;
 	}
 
 	if(!m_bIPv4) // Code only process ipv4 addresses :(
+	{
+		//printf("Not ipv4\n");
 		return true;
+	}
 
 	if(m_nFrameLength < 34) // 14+ 20 ipv4 header!
 		return false;
 
-	m_pIPAddrSrc = m_pFrame+26;
-	m_pIPAddrSrc = m_pFrame+30;
-
+	m_pIPAddrSrc = (unsigned char*)m_pFrame+26;
+	m_pIPAddrDst = (unsigned char*)m_pFrame+30;
+	//printf("Is ipv4!\n");
 	return true;
 
 

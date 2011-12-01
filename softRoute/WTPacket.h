@@ -21,8 +21,8 @@ public:
 
 
 	bool m_bIPv4;
-	char* m_pIPAddrDst;
-	char* m_pIPAddrSrc;
+	unsigned char* m_pIPAddrDst;
+	unsigned char* m_pIPAddrSrc;
 	char* m_pMacDst;
 	char* m_pMacSrc;
 

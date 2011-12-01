@@ -137,7 +137,7 @@ void InterfaceOutput::inject(u_char* data, int len)
 			}
 			else
 			{
-				printf("Found Mac, copying it across!\n");
+				//printf("Found Mac, copying it across!\n");
 				memcpy((void*)data, (void*)dstmac, 6);
 			}//if found mac
 

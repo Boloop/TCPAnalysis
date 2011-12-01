@@ -127,18 +127,22 @@ void InterfaceOutput::inject(u_char* data, int len)
 
 	if (processed && m_pArpTable != NULL)
 	{
-		//Find that mac address!
-		char* dstmac = m_pArpTable->findMacFromIP((char*)pack.m_pIPAddrDst);
-		if(dstmac == NULL)
-		{
-			printf("IP not in file?\n");
-		}
-		else
-		{
-			printf("Found Mac, copying it across!\n");
-			memcpy((void*)data, (void*)dstmac, 6);
-		}
-	}
+		if(pack.m_bIPv4){
+
+			//Find that mac address!
+			char* dstmac = m_pArpTable->findMacFromIP((char*)pack.m_pIPAddrDst);
+			if(dstmac == NULL)
+			{
+				printf("IP not in file?\n");
+			}
+			else
+			{
+				printf("Found Mac, copying it across!\n");
+				memcpy((void*)data, (void*)dstmac, 6);
+			}//if found mac
+
+		}// if ipv4
+	}// if got table and processed frame
 
 	pcap_inject(m_pDev, (void*)data, len);
 }

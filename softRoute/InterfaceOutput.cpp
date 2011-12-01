@@ -5,7 +5,7 @@
  *      Author: one
  */
 
-#include <stdio.h>
+
 #include "InterfaceOutput.h"
 
 InterfaceOutput::InterfaceOutput(char* interface) {
@@ -16,6 +16,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_pDev = NULL;
 	m_sInterface = interface;
 	m_bInjectWithBroadcast = false;
+	m_bPrintPackets = false;
 
 
 }
@@ -56,6 +57,14 @@ void InterfaceOutput::setBroadcast(bool val)
 	m_bInjectWithBroadcast = val;
 }
 
+void InterfaceOutput::setPrintPackets(bool val)
+{
+	/*
+	 * Will print summary of packets when inject
+	 */
+	m_bPrintPackets = val;
+}
+
 void InterfaceOutput::inject(u_char* data, int len)
 {
 	/*
@@ -64,6 +73,21 @@ void InterfaceOutput::inject(u_char* data, int len)
 	if(m_bInjectWithBroadcast)
 	{
 		memset(data, 0xFF, 6);
+	}
+
+	if(m_bPrintPackets)
+	{
+		if (len >= 12)
+		{
+			printf("OUTPUTTUNG %s Des: %02X:%02X:%02X:%02X:%02X:%02X Src %02X:%02X:%02X:%02X:%02X:%02X\n",
+					m_sInterface, data[0], data[1], data[2], data[3], data[4] ,data[5] ,data[6] ,data[7] ,
+					data[8], data[9], data[10], data[11]);
+		}
+		else
+		{
+			printf("OUTPUTTUNG %s, Bloody Tiny frame!?", m_sInterface);
+		}
+
 	}
 	pcap_inject(m_pDev, (void*)data, len);
 }

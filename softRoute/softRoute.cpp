@@ -129,6 +129,12 @@ int main(int argc, char **argv)
 	InterfaceOutput::InterfaceOutput* devInjTwo = new InterfaceOutput::InterfaceOutput(a.sDev2);
 
 
+	if(arpTable != NULL)
+	{
+		devInjOne->setArpTable(arpTable);
+		devInjTwo->setArpTable(arpTable);
+	}
+
 	if(a.bPrintPacketsOut)
 	{
 		devInjOne->setPrintPackets(true);

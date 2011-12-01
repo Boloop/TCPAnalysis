@@ -98,6 +98,28 @@ void ArpTable::printTable(){
 
 }
 
+char* ArpTable::findMacFromIP(char* sIP)
+{
+	/*
+	 * Will return prt to mac address of if in list!
+	 * Null if it can not be found
+	 */
+
+	int i;
+	for(i = 0; i < m_nMacIPCount; i++)
+	{
+		if (memcmp ( sIP, m_pMacIPs[i]->ip4, 4 ) == 0)
+		{
+			return m_pMacIPs[i]->mac;
+		}
+	}
+
+	return NULL;
+
+
+
+}
+
 ArpTable::~ArpTable() {
 	// destructor, freeing the memory slaves!
 

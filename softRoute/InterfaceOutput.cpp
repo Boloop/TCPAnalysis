@@ -17,6 +17,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_sInterface = interface;
 	m_bInjectWithBroadcast = false;
 	m_bPrintPackets = false;
+	m_pArpTable = NULL;
 
 
 }
@@ -65,6 +66,15 @@ void InterfaceOutput::setPrintPackets(bool val)
 	m_bPrintPackets = val;
 }
 
+void InterfaceOutput::setArpTable(ArpTable* tbl)
+{
+	/*
+	 * this will load a static Arp Table
+	 */
+
+	m_pArpTable = tbl;
+}
+
 void InterfaceOutput::inject(u_char* data, int len)
 {
 	/*
@@ -75,12 +85,17 @@ void InterfaceOutput::inject(u_char* data, int len)
 		memset(data, 0xFF, 6);
 	}
 
+
+	WTPacket pack((char*)data, len);
+	bool processed = pack.process();
+
+
 	if(m_bPrintPackets)
 	{
 		if (len >= 12)
 		{
-			WTPacket pack((char*)data, len);
-			if(!pack.process())
+
+			if(!processed)
 			{
 				printf("OUTPUTTUNG %s Did not understand packet\n", m_sInterface);
 			}
@@ -97,6 +112,8 @@ void InterfaceOutput::inject(u_char* data, int len)
 					printf("OUTPUTTUNG %s Des: %d.%d.%d.%d Src:  %d.%d.%d.%d\n", m_sInterface,
 							pack.m_pIPAddrDst[0], pack.m_pIPAddrDst[1], pack.m_pIPAddrDst[2], pack.m_pIPAddrDst[3],
 							pack.m_pIPAddrSrc[0], pack.m_pIPAddrSrc[1], pack.m_pIPAddrSrc[2], pack.m_pIPAddrSrc[3]);
+
+
 				}
 			}
 
@@ -107,6 +124,22 @@ void InterfaceOutput::inject(u_char* data, int len)
 		}
 
 	}
+
+	if (processed && m_pArpTable != NULL)
+	{
+		//Find that mac address!
+		char* dstmac = m_pArpTable->findMacFromIP((char*)pack.m_pIPAddrDst);
+		if(dstmac == NULL)
+		{
+			printf("IP not in file?\n");
+		}
+		else
+		{
+			printf("Found Mac, copying it across!\n");
+			memcpy((void*)data, (void*)dstmac, 6);
+		}
+	}
+
 	pcap_inject(m_pDev, (void*)data, len);
 }
 

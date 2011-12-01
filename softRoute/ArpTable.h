@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct macip
 {
@@ -30,7 +31,7 @@ private:
 public:
 	ArpTable();
 	bool readFile(char*);
-
+	char* findMacFromIP(char*);
 	void printTable();
 	virtual ~ArpTable();
 };

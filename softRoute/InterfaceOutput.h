@@ -23,6 +23,7 @@ extern "C" {
 }
 
 #include "WTPacket.h"
+#include "ArpTable.h"
 
 class InterfaceOutput {
 private:
@@ -33,6 +34,7 @@ private:
 
 	bool				 m_bPrintPackets;
 
+	ArpTable            *m_pArpTable;
 public:
 	InterfaceOutput(char*);
 	void inject(u_char*, int);
@@ -42,7 +44,7 @@ public:
 
 	void setPrintPackets(bool);
 
-
+	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();
 
 };

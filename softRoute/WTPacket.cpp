@@ -31,7 +31,7 @@ bool WTPacket::process()
 	m_pMacDst = m_pFrame;
 	m_pMacSrc = m_pFrame+6;
 
-	if(m_pFrame[6] == 0x80 && m_pFrame[7] == 0x00)
+	if(m_pFrame[6] == 0x08 && m_pFrame[7] == 0x00)
 	{
 		m_bIPv4 = true;
 	}

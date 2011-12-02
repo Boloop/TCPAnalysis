@@ -19,6 +19,10 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_bPrintPackets = false;
 	m_pArpTable = NULL;
 
+	m_nOutputRate = 0;
+	m_tvNextPacket.tv_sec = 0;
+	m_tvNextPacket.tv_usec = 0;
+
 
 }
 bool InterfaceOutput::open()
@@ -37,6 +41,15 @@ bool InterfaceOutput::open()
 	}
 	return true;
 
+}
+
+void InterfaceOutput::setOutputRate(int val)
+{
+	/*
+	 * This will set the output rate of the device in byte/sec
+	 */
+
+	m_nOutputRate = val;
 }
 
 void InterfaceOutput::usePcap(pcap_t* pcap)
@@ -88,6 +101,45 @@ void InterfaceOutput::inject(u_char* data, int len)
 
 	WTPacket pack((char*)data, len);
 	bool processed = pack.process();
+	bool drop = false;
+	timeval tv;
+
+
+
+
+	if (m_nOutputRate != 0)
+	{
+		/*
+		 * See if packet needs dropping, if too soon.
+		 */
+		gettimeofday(&tv, NULL);
+
+		if (tv.tv_sec > m_tvNextPacket.tv_sec || ( tv.tv_usec > m_tvNextPacket.tv_usec && tv.tv_sec == m_tvNextPacket.tv_sec ) )
+		{
+			//Can send, push the timedate back!
+
+			//Work how far to set the fecker back
+			int t = (len*1000000)/m_nOutputRate; // time in uSec!
+
+			m_tvNextPacket.tv_usec += (__suseconds_t)t;
+			while (m_tvNextPacket.tv_usec > 1000000)
+			{
+				m_tvNextPacket.tv_usec -= 1000000;
+				m_tvNextPacket.tv_sec += 1;
+			}
+
+
+
+
+		}
+		else
+		{
+			drop = true;
+		}
+
+
+
+	}
 
 
 	if(m_bPrintPackets)
@@ -143,6 +195,8 @@ void InterfaceOutput::inject(u_char* data, int len)
 
 		}// if ipv4
 	}// if got table and processed frame
+
+	if(drop) return;
 
 	pcap_inject(m_pDev, (void*)data, len);
 }

@@ -14,6 +14,7 @@
 #include <string.h>
 #include <pcap.h>  /* GIMME a libpcap plz! */
 #include <errno.h>
+#include <sys/time.h>
 extern "C" {
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -22,19 +23,27 @@ extern "C" {
 	#include <pthread.h>
 }
 
+
 #include "WTPacket.h"
 #include "ArpTable.h"
+
 
 class InterfaceOutput {
 private:
 	char  				*m_sInterface;
 	char 				*m_sErrBuf;
 	pcap_t 				*m_pDev;
+
+	int 				 m_nOutputRate; // byte/sec. 0 = none/unlimited.
+	timeval 			 m_tvNextPacket; // Time that next packet has to be sent after!
+
 	bool				 m_bInjectWithBroadcast;
 
 	bool				 m_bPrintPackets;
 
 	ArpTable            *m_pArpTable;
+
+
 public:
 	InterfaceOutput(char*);
 	void inject(u_char*, int);
@@ -43,6 +52,7 @@ public:
 	void usePcap(pcap_t*);
 
 	void setPrintPackets(bool);
+	void setOutputRate(int);
 
 	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();

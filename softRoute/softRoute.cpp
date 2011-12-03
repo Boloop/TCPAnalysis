@@ -16,6 +16,7 @@ struct args
 	bool bPrintArp;
 	bool bPrintPacketsIn;
 	bool bPrintPacketsOut;
+	int nOutputRate;
 };
 
 void intArgs(args *a)
@@ -26,6 +27,7 @@ void intArgs(args *a)
 	a->bPrintArp = false;
 	a->bPrintPacketsIn = false;
 	a->bPrintPacketsOut = false;
+	a->nOutputRate = 0;
 
 }
 
@@ -59,6 +61,32 @@ bool readArgs(args *a, int argc, char **argv)
 			else
 			{
 				fprintf(stderr, "Please enter a path for -a Arp table file\n");
+				return false;
+			}
+		} // if -a
+
+
+		// -or Output Rate in byte/sec!
+		if ( strcmp (parg,"-or") == 0 ) // -or for Outputrate
+		{
+			if (argc != iend-1)
+			{
+				int rate = atoi (argv[i+1]);
+				if (rate <= 0)
+				{
+					fprintf(stderr, "Output rate incorrect...\n");
+					return false;
+				}
+
+				a->nOutputRate = rate;
+
+
+				i++;
+				continue;
+			}
+			else
+			{
+				fprintf(stderr, "Please enter a size for -or output rate\n");
 				return false;
 			}
 		} // if -a
@@ -139,6 +167,12 @@ int main(int argc, char **argv)
 	{
 		devInjOne->setPrintPackets(true);
 		devInjTwo->setPrintPackets(true);
+	}
+
+	if(a.nOutputRate != 0)
+	{
+		devInjOne->setOutputRate(a.nOutputRate);
+		devInjTwo->setOutputRate(a.nOutputRate);
 	}
 
 

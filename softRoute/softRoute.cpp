@@ -159,18 +159,21 @@ int main(int argc, char **argv)
 
 	if(arpTable != NULL)
 	{
+		printf("Loading ARP table into output interfaces\n");
 		devInjOne->setArpTable(arpTable);
 		devInjTwo->setArpTable(arpTable);
 	}
 
 	if(a.bPrintPacketsOut)
 	{
+		printf("Setting to print packets on Outputs\n");
 		devInjOne->setPrintPackets(true);
 		devInjTwo->setPrintPackets(true);
 	}
 
 	if(a.nOutputRate != 0)
 	{
+		printf("Setting outputrate to %d byte/sec\n", a.nOutputRate);
 		devInjOne->setOutputRate(a.nOutputRate);
 		devInjTwo->setOutputRate(a.nOutputRate);
 	}

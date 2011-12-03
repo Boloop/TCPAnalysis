@@ -113,7 +113,7 @@ void InterfaceOutput::inject(u_char* data, int len)
 		 * See if packet needs dropping, if too soon.
 		 */
 		gettimeofday(&tv, NULL);
-
+		//printf("time now %d:%d\n", tv.tv_sec, tv.tv_usec);
 		if (tv.tv_sec > m_tvNextPacket.tv_sec || ( tv.tv_usec > m_tvNextPacket.tv_usec && tv.tv_sec == m_tvNextPacket.tv_sec ) )
 		{
 			//Can send, push the timedate back!
@@ -121,19 +121,25 @@ void InterfaceOutput::inject(u_char* data, int len)
 			//Work how far to set the fecker back
 			int t = (len*1000000)/m_nOutputRate; // time in uSec!
 
+			m_tvNextPacket.tv_usec = tv.tv_usec;
+			m_tvNextPacket.tv_sec = tv.tv_sec;
+
 			m_tvNextPacket.tv_usec += (__suseconds_t)t;
-			while (m_tvNextPacket.tv_usec > 1000000)
+			//printf("adding %d to %d\n", (__suseconds_t)t, m_tvNextPacket.tv_usec);
+			while (m_tvNextPacket.tv_usec >= 1000000)
 			{
 				m_tvNextPacket.tv_usec -= 1000000;
 				m_tvNextPacket.tv_sec += 1;
-			}
 
+			}
+			//printf("wait for %d:%d\n", m_tvNextPacket.tv_usec, m_tvNextPacket.tv_usec);
 
 
 
 		}
 		else
 		{
+			//printf("dropped\n");
 			drop = true;
 		}
 

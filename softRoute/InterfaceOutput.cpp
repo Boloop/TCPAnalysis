@@ -120,12 +120,13 @@ void InterfaceOutput::inject(u_char* data, int len)
 
 			//Work how far to set the fecker back
 			int t = (len*1000000)/m_nOutputRate; // time in uSec!
+			printf("packet of %d has %duS TX time\n", len, (__suseconds_t)t);
 
 			m_tvNextPacket.tv_usec = tv.tv_usec;
 			m_tvNextPacket.tv_sec = tv.tv_sec;
 
 			m_tvNextPacket.tv_usec += (__suseconds_t)t;
-			//printf("adding %d to %d\n", (__suseconds_t)t, m_tvNextPacket.tv_usec);
+			printf("adding %d to %d\n", (__suseconds_t)t, m_tvNextPacket.tv_usec);
 			while (m_tvNextPacket.tv_usec >= 1000000)
 			{
 				m_tvNextPacket.tv_usec -= 1000000;
@@ -139,7 +140,7 @@ void InterfaceOutput::inject(u_char* data, int len)
 		}
 		else
 		{
-			//printf("dropped\n");
+			printf("dropped\n");
 			drop = true;
 		}
 

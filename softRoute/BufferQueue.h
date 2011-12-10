@@ -6,8 +6,8 @@
  *
  *  Not thread safe (as of yet)!
  *
- *                          | - Where m_nTopIndex will be placed
- *   |<-- Packet 1 Data -->|<- Size of packet 1 ->|<-- Packet 2 Data -->|<- Size of packet 2 ->|....
+ *              Where m_nTopIndex will be placed ->|
+ *   |<-- Size of packet 1 -->|<- Packet 1 data ->|<-- Size of packet 2 -->|<- Packet 2 Data ->|....
  *
  */
 
@@ -24,6 +24,7 @@ private:
 	int    m_nCapacity;
 	int    m_nTopIndex;
 	int    m_nSizeSize; //Size of the integer used to measure a size of the packet in a buffer
+	int   *m_pTopPacketSize;
 
 
 public:
@@ -31,6 +32,7 @@ public:
 
 	bool addOnTop(char*, int);
 
+	int removeFromBottom(char);
 
 	virtual ~BufferQueue();
 };

@@ -10,10 +10,19 @@ BufferQueue::BufferQueue(int size) {
 	//  constructor stub
 
 	m_nCapacity = size;
+	if (m_nCapacity < 128)
+	{
+		/*
+		 * What do we DO!?!?!?!?
+		 */
+		return; // Segfault with style
+	}
 
 	m_pBuffer = (char*)malloc(m_nCapacity);
 	m_nTopIndex = 0;
 	m_nSizeSize = sizeof(int);
+	m_pTopPacketSize = (int*)m_pBuffer;
+	*m_pTopPacketSize = 0;
 
 
 }

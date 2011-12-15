@@ -19,6 +19,27 @@ def hasFlag(flag, args):
 	
 	return flag in args
 
+def flagWithX(flag, x, args):
+	"""
+	This will find flag and return the number of parameters x
+	after it
+	e.g. -t 10 20 will be ("-t", 2) and return "10" and "20"
+	
+	return None if flag not there, False if incorrect number of elements
+	"""
+	if not hasFlag(flag, args):
+		return None
+	pass
+	
+	i = args.index(flag)
+	
+	if len(args) < i+x:
+		return False
+	
+	return args[i:i+x]
+	
+	
+	
 
 def tcpStat(tcp):
 	"""
@@ -142,6 +163,7 @@ if __name__ == "__main__":
 			congwinplot = gp.Gnuplot()
 			congwinplot.xlabel("time")
 			congwinplot.ylabel("Congestion Window size")
+			print "ok", wints[-1],winwin[-1]
 			congwindata = gp.Data(wints[:drop],winwin[:drop], with_="filledcurves", title="Congestion Window")
 		
 			rtsts, rtsrts, l = tcpCon.getRetransmits()

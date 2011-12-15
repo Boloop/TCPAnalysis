@@ -466,8 +466,8 @@ class TcpCon(object):
 		
 		next = None
 		
-		times = []
-		window = []
+		times = [0]
+		window = [0]
 		
 		while True:
 			
@@ -525,7 +525,12 @@ class TcpCon(object):
 			
 			times.append(td)
 			window.append(dif)
-			
+		
+		#add last
+		times.append(times[-1]*2.01)
+		window.append(1)
+		print "Added last?"
+		print times[-1], window[-1]
 		return (times, window)
 					
 					

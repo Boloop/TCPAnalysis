@@ -10,19 +10,11 @@ BufferQueue::BufferQueue(int size) {
 	//  constructor stub
 
 	m_nCapacity = size;
-	if (m_nCapacity < 128)
-	{
-		/*
-		 * What do we DO!?!?!?!?
-		 */
-		return; // Segfault with style
-	}
+	m_nUtilised = 0;
+	m_queue = new std::queue<DataPacket>();
 
-	m_pBuffer = (char*)malloc(m_nCapacity);
-	m_nTopIndex = 0;
-	m_nSizeSize = sizeof(int);
-	m_pTopPacketSize = (int*)m_pBuffer;
-	*m_pTopPacketSize = 0;
+	m_Lock = PTHREAD_MUTEX_INITIALIZER;
+	m_CondDataAvail = PTHREAD_COND_INITIALIZER;
 
 
 }
@@ -35,22 +27,55 @@ bool BufferQueue::addOnTop(char* data, int size)
 	 */
 
 	//Do we have the space?
-	int spaceLeft = m_nCapacity-m_nTopIndex-m_nSizeSize;
+	int spaceLeft = m_nCapacity-m_nUtilised;
 
 	if (spaceLeft < size) // No space :(
 		return false;
 
-	//Copy across! (There is a god if this works, not that I have no faith in my own abilities...)
-	char* cpyPointer = m_pBuffer+m_nTopIndex+m_nSizeSize;
-	memcpy((void*)cpyPointer, (void*)data, size);
-	int* bufsize = (int*) (cpyPointer+size);
-	*bufsize = size;
+	//Copy across! SHINJI!
+	char* newData = (char*)malloc(size);
+	memcpy((void*)newData, (void*)data, size);
 
+	DataPacket dp;
+	dp.nSize = size;
+	dp.pData = newData;
+
+	m_queue->push(dp);
 
 	return true;
 
 }
 
+int BufferQueue::removeFromBottom(char* newData)
+{
+	/*
+	 * Will copy (if anything) into the char* buffer of what is next to be served in the kitchen
+	 * 0 = Empty, Nada, nothing!
+	 */
+
+
+	if(m_queue->empty())
+		return 0;
+
+
+	DataPacket dp = m_queue->front();
+	memcpy((void*)newData, (void*)dp.pData, dp.nSize);
+	m_queue->pop();
+
+	return dp.nSize;
+
+}
+
 BufferQueue::~BufferQueue() {
 	// destructor stub
+
+	while(!m_queue->empty())
+	{
+		DataPacket dp = m_queue->front();
+		free(dp.pData);
+		m_queue->pop();
+	}
+
+
+	delete m_queue;
 }

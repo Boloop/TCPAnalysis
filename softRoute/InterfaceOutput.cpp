@@ -19,6 +19,8 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_bPrintPackets = false;
 	m_pArpTable = NULL;
 
+	m_pBufferQueue = NULL;
+
 	m_nOutputRate = 0;
 	m_tvNextPacket.tv_sec = 0;
 	m_tvNextPacket.tv_usec = 0;

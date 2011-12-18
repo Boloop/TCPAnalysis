@@ -781,7 +781,7 @@ class TcpCon(object):
 		This will remove the fin handshakes in both paths
 		"""
 		
-		for l in [self.forward, self.backward]:
+		for l, m in [(self.forward, self.forwardECN), (self.backward, self.backwardECN)]:
 			rml = []
 			i = 0
 			for ts, p in l:
@@ -795,6 +795,7 @@ class TcpCon(object):
 			print rml, "remove", len(l)
 			for rm in rml:
 				l.pop(rm)
+				m.pop(rm)
 	
 	
 	def getSACKs(self, outtype=DATA_FLOAT, path=PATH_BACKWARD, rel=RELATIVE_LASTACK):
@@ -851,6 +852,30 @@ class TcpCon(object):
 				count += 1
 		
 		return count
+	
+	def getECNInIP(self, outtype=DATA_FLOAT, flag=ECN_CE, path=PATH_BACKWARD):
+		"""
+		Will return the list of TSes when the flag occurs
+		"""		
+		
+		result = []
+		
+		if path == PATH_FORWARD:
+			ecns = self.forwardECN
+		else:
+			ecns = self.backwardECN
+		
+		for ts, ecn in ecns:
+			if ecn == flag:
+			
+				time = ts - self.origin #pcap to origin
+				if outtype == DATA_FLOAT:
+						
+						time = dfToFloat(time)
+				
+				result.append(time)
+		return result
+		
 			
 		
 				

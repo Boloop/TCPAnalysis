@@ -72,8 +72,9 @@ if __name__ == "__main__":
 	showRTT = hasFlag("-rtt", args)
 	showRTTTS = hasFlag("-rttts", args)
 	showDataTX = hasFlag("-data", args)
-		
-		
+	
+	showECN = hasFlag("-ecn", args)
+	
 	path = sys.argv[-1]
 	
 	p = pcr.PcapRead()
@@ -139,8 +140,8 @@ if __name__ == "__main__":
 		#Print stats
 		ipa = strIP(tcpCon.ip1)+":"+str(tcpCon.port1)
 		ipb = strIP(tcpCon.ip2)+":"+str(tcpCon.port2)
-		print ipa+" >>  FORWARD  >> "+ipb+" []
-		print ipa+" <<  BACKWARD << "+ipb+" 
+		print ipa+" >>  FORWARD  >> "+ipb+" ["+str(len(tcpCon.forward))+"]["+str(len(tcpCon.forwardECN))+"]"
+		print ipa+" <<  BACKWARD << "+ipb+" ["+str(len(tcpCon.backward))+"]["+str(len(tcpCon.backwardECN))+"]" 
 		count = tcpCon.getPacketCount()
 		drop = count/100
 		drop = 0
@@ -198,8 +199,17 @@ if __name__ == "__main__":
 				#addlatest ack'd
 				sackendts.append(ts)
 				sackend.append(segs[-1])
-		
-		
+			
+			
+			#Ecn!
+			ecncets = [0]
+			ecnceval = [100]
+			if showECN:
+				ecncets = tcpCon.getECNInIP(flag=tm.ECN_CE, path=tm.PATH_FORWARD)
+				ecnceval = [500]*len(ecncets)
+			
+			ecndata = gp.Data(ecncets,ecnceval, title="ECN_CE")
+				
 			
 		
 			if len(rtsts) != 0:
@@ -209,13 +219,13 @@ if __name__ == "__main__":
 					sackdata = gp.Data(sacksackts, sacksack, title = "SACKs")
 					sackenddata = gp.Data(sackendts, sackend, title = "SACKEnd")
 				
-					congwinplot.plot(congwindata, rtsdata, sackdata, sackenddata)
+					congwinplot.plot(congwindata, rtsdata, sackdata, sackenddata, ecndata)
 					#congwinplot.plot(congwindata, rtsdata, sackdata)
 				else:
 					rtsdata = gp.Data(rtsts,rtsrts, title="Retransmits")
-					congwinplot.plot(congwindata, rtsdata)
+					congwinplot.plot(congwindata, rtsdata, ecndata)
 			else:
-				congwinplot.plot(congwindata)
+				congwinplot.plot(congwindata, ecndata)
 			
 		
 		if showRTT:

@@ -118,7 +118,8 @@ if __name__ == "__main__":
 					tcpCon = tm.TcpCon(ip, packet.time)
 					
 				elif tcpCon.sameSocket(ip):
-					tcpCon.addPacket(ip.data, packet.time)
+					tcpCon.addIPPacket(ip, packet.time)
+					#tcpCon.addPacket(ip.data, packet.time)
 					#print "Yay"
 				else:
 					print "Nay"
@@ -138,8 +139,8 @@ if __name__ == "__main__":
 		#Print stats
 		ipa = strIP(tcpCon.ip1)+":"+str(tcpCon.port1)
 		ipb = strIP(tcpCon.ip2)+":"+str(tcpCon.port2)
-		print ipa+" >>  FORWARD  >> "+ipb
-		print ipa+" <<  BACKWARD << "+ipb
+		print ipa+" >>  FORWARD  >> "+ipb+" []
+		print ipa+" <<  BACKWARD << "+ipb+" 
 		count = tcpCon.getPacketCount()
 		drop = count/100
 		drop = 0
@@ -152,6 +153,16 @@ if __name__ == "__main__":
 		print "Has {0} flagged ECE bits".format(ecenum)
 		cwrnum = tcpCon.countFlags(dpkt.tcp.TH_CWR)
 		print "Has {0} flagged CWR bits".format(ecenum)
+		
+		path = tm.PATH_FORWARD
+		cenum = tcpCon.countECNInIP(tm.ECN_CE, path=path)
+		print "Has {0} flagged CE bits".format(cenum)
+		ect0num = tcpCon.countECNInIP(tm.ECN_ECT0, path=path)
+		print "Has {0} flagged ECT0 bits".format(ect0num)
+		ect1num = tcpCon.countECNInIP(tm.ECN_ECT1, path=path)
+		print "Has {0} flagged ECT1 bits".format(cenum)
+		nonectnum = tcpCon.countECNInIP(tm.ECN_NONECT, path=path)
+		print "Has {0} flagged NON-ECT bits".format(nonectnum)
 		
 		#sN = tcpCon.getSACKs()
 		#print "Has {0} SACK opt'ed packs".format(sN)
@@ -233,6 +244,7 @@ if __name__ == "__main__":
 			drplot.ylabel("Datarate")
 			drdata = gp.Data(drts[:drop], drdr[:drop], with_="lines")
 			drplot.plot(drdata) 
+		
 		
 		
 		

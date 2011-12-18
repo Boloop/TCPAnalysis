@@ -18,6 +18,12 @@ TIME_LAST = 2
 RELATIVE_ABSOLUTE = 1
 RELATIVE_LASTACK = 2
 
+ECN_NONECT = 0
+ECN_ECT0 = 2
+ECN_ECT1 = 1
+ECN_CE = 3
+
+
 
 optsToString = {dpkt.tcp.TCP_OPT_ALTSUM		:"ALTSUM",
 		dpkt.tcp.TCP_OPT_BUBBA		:"BUBBA",
@@ -152,7 +158,25 @@ class TCPOptions(object):
 		
 		
 				
-
+def getECNFlagsFromIP(ipHeader):
+	"""
+	give in ip.pack_hdr() and this will read the magical number and return 
+	the ECN value.
+	"""
+	val = ord(ipHeader[2]) & 3 # last two bits of the 3rd byte
+	
+	#ECN_NONECT = 0
+	#ECN_ECT0 = 2
+	#ECN_ECT1 = 1
+	#ECN_CE = 3
+	
+	
+	if val == 0: return ECN_NONECT
+	if val == 2: return ECN_ECT0
+	if val == 1: return ECN_ECT1
+	if val == 3: return ECN_CE
+	
+	return None
 	
 
 class TcpCon(object):
@@ -168,6 +192,9 @@ class TcpCon(object):
 		
 		self.forward = [(ts, ip.data)]
 		self.backward = []
+		
+		self.forwardECN = [ ( ts, getECNFlagsFromIP ( ip.pack_hdr() ) ) ]
+		self.backwardECN = []
 		
 		self.origin = None
 	
@@ -207,6 +234,24 @@ class TcpCon(object):
 		#I'm gonna gat ya!
 		return False
 		
+	
+	def addIPPacket(self, ip, ts):
+		"""
+		this will add the ip packet into the list
+		"""
+		tcp = ip.data
+		
+		if ( tcp.sport == self.port1 and tcp.dport == self.port2 ):
+			#Forward
+			self.forward.append((ts, tcp))
+			self.forwardECN.append( ( ts, getECNFlagsFromIP ( ip.pack_hdr() ) ) )
+			
+		if ( tcp.sport == self.port2 and tcp.dport == self.port1 ):
+		    	#backward
+		    	self.backward.append((ts, tcp))
+		    	self.backwardECN.append( ( ts, getECNFlagsFromIP ( ip.pack_hdr() ) ) )
+	
+	
 	def addPacket(self, tcp, ts):
 		"""
 		This will add a packet into the list.
@@ -789,7 +834,24 @@ class TcpCon(object):
 		return sackpacks
 		
 					
-				
+	def countECNInIP(self, flag=ECN_CE, path=PATH_BACKWARD):
+		"""
+		Will return the number of packets of ecn in IP
+		"""		
+		
+		if path == PATH_FORWARD:
+			ecns = self.forwardECN
+		else:
+			ecns = self.backwardECN
+		
+		count = 0
+		
+		for ts, ecn in ecns:
+			if ecn == flag:
+				count += 1
+		
+		return count
+			
 		
 				
 			

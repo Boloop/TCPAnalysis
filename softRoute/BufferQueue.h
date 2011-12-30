@@ -6,8 +6,6 @@
  *
  *  Not thread safe (as of yet)!
  *
- *              Where m_nTopIndex will be placed ->|
- *   |<-- Size of packet 1 -->|<- Packet 1 data ->|<-- Size of packet 2 -->|<- Packet 2 Data ->|....
  *
  */
 
@@ -17,14 +15,27 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <queue>
+
+
+
+struct DataPacket {
+   int nSize;
+   char *pData;
+};
 
 class BufferQueue {
 private:
-	char * m_pBuffer;
-	int    m_nCapacity;
-	int    m_nTopIndex;
-	int    m_nSizeSize; //Size of the integer used to measure a size of the packet in a buffer
-	int   *m_pTopPacketSize;
+
+	int    m_nCapacity; // The total overall size of the buffer
+	int	   m_nUtilised; // The size of the buffer being used.
+
+	pthread_mutex_t m_Lock;
+	pthread_cond_t m_CondDataAvail;
+
+
+	std::queue<DataPacket> *m_queue;
 
 
 public:
@@ -32,7 +43,7 @@ public:
 
 	bool addOnTop(char*, int);
 
-	int removeFromBottom(char);
+	int removeFromBottom(char*);
 
 	virtual ~BufferQueue();
 };

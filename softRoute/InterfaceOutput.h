@@ -26,6 +26,7 @@ extern "C" {
 
 #include "WTPacket.h"
 #include "ArpTable.h"
+#include "BufferQueue.h"
 
 
 class InterfaceOutput {
@@ -43,6 +44,8 @@ private:
 
 	ArpTable            *m_pArpTable;
 
+	BufferQueue			*m_pBufferQueue;
+
 
 public:
 	InterfaceOutput(char*);
@@ -53,6 +56,8 @@ public:
 
 	void setPrintPackets(bool);
 	void setOutputRate(int);
+
+	void setUpBufferWithSize(int);
 
 	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();

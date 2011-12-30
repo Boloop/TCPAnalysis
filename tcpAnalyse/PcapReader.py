@@ -7,6 +7,7 @@ import datetime
 LL_ETHERNET = 1
 LL_IEEE802_11 = 105
 LL_LINUX_SLL = 113
+LL_IEEE802_11_RADIO = 127
 
 class PcapPacket(object):
 	

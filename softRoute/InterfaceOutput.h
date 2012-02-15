@@ -21,15 +21,18 @@ extern "C" {
 	#include <arpa/inet.h>
 
 	#include <pthread.h>
+
+	#include <unistd.h>
 }
 
 
 #include "WTPacket.h"
 #include "ArpTable.h"
 #include "BufferQueue.h"
+#include "MyThread.h"
 
 
-class InterfaceOutput {
+class InterfaceOutput : public MyThread {
 private:
 	char  				*m_sInterface;
 	char 				*m_sErrBuf;
@@ -45,6 +48,7 @@ private:
 	ArpTable            *m_pArpTable;
 
 	BufferQueue			*m_pBufferQueue;
+	bool				 m_bIsDead;
 
 
 public:
@@ -61,6 +65,11 @@ public:
 
 	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();
+
+	//bool open();
+	void addInputBuffer(BufferQueue * bq);
+	void Execute();
+	void kill();
 
 };
 

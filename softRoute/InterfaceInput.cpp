@@ -19,6 +19,7 @@ InterfaceInput::InterfaceInput(char* interface) {
 	m_nPData = 0;
 
 	m_pBridgeOutput = NULL;
+	m_pBufferQueue = NULL;
 
 }
 
@@ -104,6 +105,17 @@ void InterfaceInput::bridgeWith(InterfaceOutput::InterfaceOutput* outputdev)
 
 	m_pBridgeOutput = outputdev;
 
+}
+
+void InterfaceInput::pipeIntoBuffer(BufferQueue * bq)
+{
+	/*
+	 * This is mutually Exclusive to bridge with!
+	 *
+	 * Any packet received will go into this buffer
+	 */
+
+	m_pBufferQueue = bq;
 }
 
 
@@ -219,6 +231,10 @@ void InterfaceInput::gotPacket(u_char *args, const struct pcap_pkthdr *header, c
 		//pcap_inject(self->m_pBridgeOutput, packet, header->len);
 
 
+	}
+	else if (self->m_pBufferQueue != NULL)
+	{
+		self->m_pBufferQueue->addOnTop((char*)packet, header->len);
 	}
 
 }

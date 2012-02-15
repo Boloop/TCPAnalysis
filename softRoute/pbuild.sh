@@ -7,4 +7,4 @@ g++ -g -Wall -c ArpTable.cpp
 g++ -g -Wall -c BufferQueue.cpp
 g++ -g -Wall -c WTPacket.cpp
 g++ -g -Wall -c softRoute.cpp
-g++ -g -Wall -lpcap -lpthread -o softRoute MyThread.o ArpTable.o WTPacket.o InterfaceInput.o InterfaceOutput.o softRoute.o
+g++ -g -Wall -lpcap -lpthread -lrt -o softRoute MyThread.o ArpTable.o WTPacket.o InterfaceInput.o InterfaceOutput.o softRoute.o BufferQueue.o

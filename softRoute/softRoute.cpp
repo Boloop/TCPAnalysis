@@ -7,6 +7,7 @@
 #include "InterfaceInput.h"
 #include "InterfaceOutput.h"
 #include "ArpTable.h"
+#include "BufferQueue.h"
 
 struct args
 {
@@ -156,6 +157,9 @@ int main(int argc, char **argv)
 	InterfaceInput::InterfaceInput* devLisTwo = new InterfaceInput::InterfaceInput(a.sDev2);
 	InterfaceOutput::InterfaceOutput* devInjTwo = new InterfaceOutput::InterfaceOutput(a.sDev2);
 
+	BufferQueue::BufferQueue * bqOneToTwo = new BufferQueue::BufferQueue(6400);
+	BufferQueue::BufferQueue * bqTwoToOne = new BufferQueue::BufferQueue(6400);
+
 
 	if(arpTable != NULL)
 	{
@@ -207,8 +211,24 @@ int main(int argc, char **argv)
 	devInjOne->setBroadcast(true);
 	devInjTwo->setBroadcast(true);
 
-	devLisOne->bridgeWith(devInjTwo);
-	devLisTwo->bridgeWith(devInjOne);
+	//
+	//Bridge
+	//
+	//devLisOne->bridgeWith(devInjTwo);
+	//devLisTwo->bridgeWith(devInjOne);
+
+	//
+	//Buffer!
+	//
+	devInjOne->addInputBuffer(bqTwoToOne);
+	devInjTwo->addInputBuffer(bqOneToTwo);
+	devLisOne->pipeIntoBuffer(bqOneToTwo);
+	devLisTwo->pipeIntoBuffer(bqTwoToOne);
+	devInjOne->Start();
+	devInjTwo->Start();
+
+
+
 
 	//printf("Listening for 10 seconds\n");
 
@@ -228,6 +248,14 @@ int main(int argc, char **argv)
 	std::cin >> userinput;
 
 	printf ("Killing\n");
+
+	devInjOne->kill();
+	devInjTwo->kill();
+
+	devInjOne->Join();
+	devInjTwo->Join();
+
+
 	devLisOne->kill();
 	devLisTwo->kill();
 

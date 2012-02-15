@@ -20,6 +20,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_pArpTable = NULL;
 
 	m_pBufferQueue = NULL;
+	m_bIsDead = false;
 
 	m_nOutputRate = 0;
 	m_tvNextPacket.tv_sec = 0;
@@ -208,6 +209,80 @@ void InterfaceOutput::inject(u_char* data, int len)
 	if(drop) return;
 
 	pcap_inject(m_pDev, (void*)data, len);
+}
+
+void InterfaceOutput::addInputBuffer(BufferQueue * bq)
+{
+
+	m_pBufferQueue = bq;
+
+}
+
+void InterfaceOutput::kill()
+{
+	/*
+	 * This will set the isDead to true, to stop the thread
+	 */
+
+
+	m_bIsDead = true;
+
+}
+
+
+void InterfaceOutput::Execute()
+{
+	/*
+	 *  This will loop checking the buffer :o	 *
+	 */
+
+	if (m_pBufferQueue == NULL)
+		return;
+
+	char* buf = (char*)malloc(1500);
+	int size, t;
+
+	while(1)
+	{
+
+
+		m_pBufferQueue->lock();
+		if(m_pBufferQueue->packetsInQueue() == 0)
+		{
+			// No packets in queue, wait until there is
+			while(m_pBufferQueue->waitForData() != 0)
+			{
+				if(m_bIsDead)
+					break;
+			}
+		}
+		//There is some packets to get at this point or dead, so check if dead
+		if(m_bIsDead)
+		{
+			m_pBufferQueue->unlock();
+			break;
+		}
+
+		//Okay, there is a packet, copy it!
+		size = m_pBufferQueue->removeFromBottom(buf);
+
+		m_pBufferQueue->unlock();
+
+		//Free locks, got data, now wait for TX time and inject.
+		if(m_nOutputRate != 0)
+		{
+			//Work how far to set the fecker back
+			t = (size*1000000)/m_nOutputRate; // time in uSec!
+
+			usleep((useconds_t)t);
+		}
+
+		//TX
+		pcap_inject(m_pDev, (void*)buf, size);
+
+	}
+
+	free(buf);
 }
 
 InterfaceOutput::~InterfaceOutput() {

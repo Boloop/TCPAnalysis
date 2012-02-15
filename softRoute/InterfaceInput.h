@@ -24,6 +24,7 @@ extern "C" {
 
 #include "MyThread.h"
 #include "InterfaceOutput.h"
+#include "BufferQueue.h"
 
 class InterfaceInput: public MyThread {
 private:
@@ -39,6 +40,8 @@ private:
 
 	InterfaceOutput::InterfaceOutput *m_pBridgeOutput;
 
+	BufferQueue *		m_pBufferQueue;
+
 public:
 	InterfaceInput(char*);
 	bool open();
@@ -47,6 +50,7 @@ public:
 	pcap_t* givePcap();
 
 	void bridgeWith(InterfaceOutput::InterfaceOutput*);
+	void pipeIntoBuffer(BufferQueue *bq);
 
 	virtual ~InterfaceInput();
 

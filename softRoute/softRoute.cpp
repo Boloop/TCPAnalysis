@@ -227,6 +227,8 @@ int main(int argc, char **argv)
 	//
 	//Buffer!
 	//
+	bqOneToTwo->setToSignal(true);
+	bqTwoToOne->setToSignal(true);
 	devInjOne->addInputBuffer(bqTwoToOne);
 	devInjTwo->addInputBuffer(bqOneToTwo);
 	devLisOne->pipeIntoBuffer(bqOneToTwo);

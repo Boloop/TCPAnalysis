@@ -118,7 +118,7 @@ int BufferQueue::packetsInQueue()
 	 */
 
 	if (m_queue->empty())
-		return 1;
+		return (int)m_queue->size();
 	else
 		return 0;
 }

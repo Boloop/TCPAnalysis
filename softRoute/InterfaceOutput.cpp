@@ -239,17 +239,21 @@ void InterfaceOutput::Execute()
 	if (m_pBufferQueue == NULL)
 		return;
 
+
+	if (m_bPrintPackets) printf("Output Thread Started\n");
 	char* buf = (char*)malloc(1500);
-	int size, t;
+	int size, t, p;
 
 	while(1)
 	{
 
 
 		m_pBufferQueue->lock();
-		if(m_pBufferQueue->packetsInQueue() == 0)
+		p = -5;
+		if( (p = m_pBufferQueue->packetsInQueue() ) == 0)
 		{
 			// No packets in queue, wait until there is
+			if (m_bPrintPackets) printf("Waiting For Data\n");
 			while(m_pBufferQueue->waitForData() != 0)
 			{
 				if(m_bIsDead)
@@ -269,15 +273,18 @@ void InterfaceOutput::Execute()
 		m_pBufferQueue->unlock();
 
 		//Free locks, got data, now wait for TX time and inject.
+
+		if (m_bPrintPackets) printf("Sleeping\n");
 		if(m_nOutputRate != 0)
 		{
 			//Work how far to set the fecker back
 			t = (size*1000000)/m_nOutputRate; // time in uSec!
-
+			if (m_bPrintPackets) printf("Sleeping for %d\n", t);
 			usleep((useconds_t)t);
 		}
 
 		//TX
+		if (m_bPrintPackets) printf("Injecting\n");
 		pcap_inject(m_pDev, (void*)buf, size);
 
 	}

@@ -34,6 +34,8 @@ private:
 	pthread_mutex_t m_Lock;
 	pthread_cond_t m_CondDataAvail;
 
+	bool m_bSignal;
+
 
 	std::queue<DataPacket> *m_queue;
 
@@ -46,6 +48,12 @@ public:
 	int removeFromBottom(char*);
 
 	virtual ~BufferQueue();
+
+	void lock();
+	void unlock();
+	int waitForData();
+	int packetsInQueue();
+	void setToSignal(bool val);
 };
 
 #endif /* BUFFERQUEUE_H_ */

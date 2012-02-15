@@ -15,8 +15,18 @@ BufferQueue::BufferQueue(int size) {
 
 	m_Lock = PTHREAD_MUTEX_INITIALIZER;
 	m_CondDataAvail = PTHREAD_COND_INITIALIZER;
+	m_bSignal = false;
 
 
+}
+
+void BufferQueue::setToSignal(bool val)
+{
+	/*
+	 * Will enable/disable setting signal to be used for waitForData method
+	 */
+
+	m_bSignal = val;
 }
 
 bool BufferQueue::addOnTop(char* data, int size)
@@ -24,6 +34,8 @@ bool BufferQueue::addOnTop(char* data, int size)
 	/*
 	 * Will try and copy the data on top of the buffer will return false if there is no space to add it
 	 * otherwise true for success
+	 *
+	 * Ideally should call lock and unlock outside this method...!
 	 */
 
 	//Do we have the space?
@@ -41,6 +53,10 @@ bool BufferQueue::addOnTop(char* data, int size)
 	dp.pData = newData;
 
 	m_queue->push(dp);
+
+	//Signal?
+	if(m_bSignal)
+		pthread_cond_signal(&m_CondDataAvail);
 
 	return true;
 
@@ -66,6 +82,47 @@ int BufferQueue::removeFromBottom(char* newData)
 
 }
 
+void BufferQueue::lock()
+{
+	pthread_mutex_lock(&m_Lock);
+}
+
+void BufferQueue::unlock()
+{
+	pthread_mutex_unlock(&m_Lock);
+}
+
+int BufferQueue::waitForData()
+{
+	/*
+	 *  This will wait if there is any data in the buffer for one second
+	 *  Will return the result of the Condition wait
+	 *  0 = Data! Error otherwise (including timeout)
+	 *
+	 * You Must have already called the Lock Method! and checked that there is no data
+	 * left, otherwise you may have packets stuck in the buffer not being read.
+	 */
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 1;
+
+	return pthread_cond_timedwait(&m_CondDataAvail, &m_Lock, &ts);
+
+}
+
+int BufferQueue::packetsInQueue()
+{
+	/*
+	 * this will return the number of packets in the queue.
+	 * Ideally, you should call the lock and unlock methods around this
+	 */
+
+	if (m_queue->empty())
+		return 1;
+	else
+		return 0;
+}
+
 BufferQueue::~BufferQueue() {
 	// destructor stub
 
@@ -79,3 +136,5 @@ BufferQueue::~BufferQueue() {
 
 	delete m_queue;
 }
+
+

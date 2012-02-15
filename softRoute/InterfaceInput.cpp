@@ -246,6 +246,7 @@ void InterfaceInput::gotPacket(u_char *args, const struct pcap_pkthdr *header, c
 	//Bridging mode?
 	if (self->m_pBridgeOutput != NULL)
 	{
+		if(self->m_bPrintPackets) printf("IN: %s GP No: %d : Sending to Injector\n", self->m_sInterface, self->m_nPackets);
 		//Special Delivery!
 		self->m_pBridgeOutput->inject((u_char*)packet, header->len);
 		//pcap_inject(self->m_pBridgeOutput, packet, header->len);
@@ -254,6 +255,7 @@ void InterfaceInput::gotPacket(u_char *args, const struct pcap_pkthdr *header, c
 	}
 	else if (self->m_pBufferQueue != NULL)
 	{
+		if(self->m_bPrintPackets) printf("IN: %s GP No: %d : AddOnBuffer\n", self->m_sInterface, self->m_nPackets);
 		self->m_pBufferQueue->addOnTop((char*)packet, header->len);
 	}
 

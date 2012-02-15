@@ -175,6 +175,13 @@ int main(int argc, char **argv)
 		devInjTwo->setPrintPackets(true);
 	}
 
+	if(a.bPrintPacketsIn)
+	{
+		printf("Setting to print packets on Outputs\n");
+		devLisOne->setPrintPackets(true);
+		devLisTwo->setPrintPackets(true);
+	}
+
 	if(a.nOutputRate != 0)
 	{
 		printf("Setting outputrate to %d byte/sec\n", a.nOutputRate);

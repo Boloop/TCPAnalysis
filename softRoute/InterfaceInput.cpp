@@ -20,6 +20,7 @@ InterfaceInput::InterfaceInput(char* interface) {
 
 	m_pBridgeOutput = NULL;
 	m_pBufferQueue = NULL;
+	m_bPrintPackets = false;
 
 }
 
@@ -54,11 +55,24 @@ pcap_t* InterfaceInput::givePcap()
 
 }
 
+void InterfaceInput::setPrintPackets(bool val)
+{
+	/*
+	 * Will print summary of packets when Listening
+	 */
+	m_bPrintPackets = val;
+}
+
 void InterfaceInput::Execute()
 {
 	/*
 	 * Loop until we get dizzy!
 	 */
+
+	if(m_bPrintPackets)
+	{
+		printf("IN: %s Thread started\n", m_sInterface);
+	}
 
 	for(;;)
 	{
@@ -77,6 +91,9 @@ void InterfaceInput::Execute()
 		pcap_loop(m_pDev, 100, InterfaceInput::gotPacket, (u_char*)this);
 
 	}
+
+	if(m_bPrintPackets) printf("IN: %s Thread Ended\n", m_sInterface);
+
 
 }
 
@@ -217,9 +234,12 @@ void InterfaceInput::gotPacket(u_char *args, const struct pcap_pkthdr *header, c
 	 * This will handle what to do when we gets a packet!
 	 */
 	InterfaceInput* self = (InterfaceInput*) args;
+	++self->m_nPackets;
 	//printf("GP : %n\n", (int)header->len);
 
 	//printf("GP: %d %s %d\n", ++self->m_nPackets, self->m_sInterface, header->len);
+
+	if(self->m_bPrintPackets) printf("IN: %s GP No: %d : Size %d\n", self->m_sInterface, self->m_nPackets, header->len);
 	self->m_nPData += header->len;
 	//printf("Got\n");
 

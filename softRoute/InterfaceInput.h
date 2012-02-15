@@ -42,6 +42,8 @@ private:
 
 	BufferQueue *		m_pBufferQueue;
 
+	bool				 m_bPrintPackets;
+
 public:
 	InterfaceInput(char*);
 	bool open();
@@ -51,6 +53,8 @@ public:
 
 	void bridgeWith(InterfaceOutput::InterfaceOutput*);
 	void pipeIntoBuffer(BufferQueue *bq);
+
+	void setPrintPackets(bool);
 
 	virtual ~InterfaceInput();
 

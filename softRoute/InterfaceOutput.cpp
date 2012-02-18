@@ -283,6 +283,31 @@ void InterfaceOutput::Execute()
 			usleep((useconds_t)t);
 		}
 
+		WTPacket pack((char*)buf, size);
+		bool processed = pack.process();
+
+		//Get the right MAC
+		if (processed && m_pArpTable != NULL)
+		{
+			if(pack.m_bIPv4){
+
+				//Find that mac address!
+				char* dstmac = m_pArpTable->findMacFromIP((char*)pack.m_pIPAddrDst);
+				if(dstmac == NULL)
+				{
+					if (m_bPrintPackets) printf("IP not in file?\n");
+				}
+				else
+				{
+					//printf("Found Mac, copying it across!\n");
+					memcpy((void*)buf, (void*)dstmac, 6);
+				}//if found mac
+
+			}// if ipv4
+		}// if got table and processed frame
+
+
+
 		//TX
 		if (m_bPrintPackets) printf("Injecting\n");
 		pcap_inject(m_pDev, (void*)buf, size);

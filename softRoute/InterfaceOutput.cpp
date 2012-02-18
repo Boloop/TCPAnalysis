@@ -250,15 +250,17 @@ void InterfaceOutput::Execute()
 
 		m_pBufferQueue->lock();
 		p = -5;
-		if( (p = m_pBufferQueue->packetsInQueue() ) == 0)
+		while( (p = m_pBufferQueue->packetsInQueue() ) == 0)
 		{
 			// No packets in queue, wait until there is
 			if (m_bPrintPackets) printf("Waiting For Data\n");
-			while(m_pBufferQueue->waitForData() != 0)
+			if(m_pBufferQueue->waitForData() == 0)
 			{
-				if(m_bIsDead)
-					break;
+				// there is data, send it!
+				break;
 			}
+			if(m_bIsDead)
+					break;
 		}
 		//There is some packets to get at this point or dead, so check if dead
 		if(m_bIsDead)

@@ -123,6 +123,22 @@ class Client(threading.Thread):
 		self.totalDataSent = 0
 		self.totalDataToSend = 0
 		
+	def setCongestionAlgo(self, a):
+		
+		if not "TCP_CONGESTION" in dir(socket):
+			print "Warning, socket Library doesn't contain TCP_CONGESTION, manually adding it as 13, unlucky"
+			socket.TCP_CONGESTION = 13
+		
+		
+		try:
+			self.soc.setsockopt(socket.SOL_TCP, socket.TCP_CONGESTION, a)
+		except socket.error, e:
+			print "Could not change cong algo to",a
+			print e
+			return False
+		
+		return True
+		
 	def connect(self):
 	
 		self.soc.connect((self.ip, self.port))

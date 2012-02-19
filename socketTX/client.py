@@ -79,6 +79,8 @@ if __name__ == "__main__":
 	
 	st = getArgPair("-t", args)
 	datas = getArgPair("-d", args)
+	congalgo = getArgPair("-Z", args)
+	
 	if st:
 		timeout = makeInt(st, "-t")
 	else:
@@ -107,6 +109,10 @@ if __name__ == "__main__":
 	
 	client = socketTX.Client(ip, port)
 	client.totalDataToSend = dataamount
+	if congalgo:
+		if not client.setCongestionAlgo(congalgo):
+			print "Could not set Congestion Algo, QUITING :("
+			sys.exit(-1)
 	
 	
 	try:

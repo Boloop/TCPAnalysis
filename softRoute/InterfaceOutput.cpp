@@ -274,6 +274,13 @@ void InterfaceOutput::Execute()
 
 		m_pBufferQueue->unlock();
 
+		if(size == 0)
+		{
+			printf("Sending Data of zero size? Skipping!\n");
+			continue;
+		}
+
+
 		//Free locks, got data, now wait for TX time and inject.
 
 		if (m_bPrintPackets) printf("Sleeping\n");

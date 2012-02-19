@@ -117,7 +117,7 @@ int BufferQueue::packetsInQueue()
 	 * Ideally, you should call the lock and unlock methods around this
 	 */
 
-	if (m_queue->empty())
+	if (!m_queue->empty())
 		return (int)m_queue->size();
 	else
 		return 0;

@@ -52,6 +52,8 @@ bool BufferQueue::addOnTop(char* data, int size)
 	dp.nSize = size;
 	dp.pData = newData;
 
+	m_nUtilised += size;
+
 	m_queue->push(dp);
 
 	//Signal?
@@ -77,6 +79,7 @@ int BufferQueue::removeFromBottom(char* newData)
 	DataPacket dp = m_queue->front();
 	memcpy((void*)newData, (void*)dp.pData, dp.nSize);
 	m_queue->pop();
+	m_nUtilised -= dp.nSize;
 
 	free(dp.pData);
 

@@ -150,7 +150,8 @@ int main(int argc, char **argv)
 			}
 	}
 
-
+	//Seed the RNG
+	srand(time(0));
 
 	InterfaceInput::InterfaceInput* devLisOne = new InterfaceInput::InterfaceInput(a.sDev1);
 	InterfaceOutput::InterfaceOutput* devInjOne = new InterfaceOutput::InterfaceOutput(a.sDev1);

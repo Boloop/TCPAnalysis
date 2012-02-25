@@ -78,6 +78,8 @@ int BufferQueue::removeFromBottom(char* newData)
 	memcpy((void*)newData, (void*)dp.pData, dp.nSize);
 	m_queue->pop();
 
+	free(dp.pData);
+
 	return dp.nSize;
 
 }

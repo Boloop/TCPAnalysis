@@ -19,6 +19,7 @@ struct args
 	bool bPrintPacketsOut;
 	int nOutputRate;
 	int nDropRate;
+	int nDropRateBack;
 };
 
 void intArgs(args *a)
@@ -31,6 +32,7 @@ void intArgs(args *a)
 	a->bPrintPacketsOut = false;
 	a->nOutputRate = 0;
 	a->nDropRate = 0; //
+	a->nDropRateBack = 0;
 
 }
 
@@ -92,7 +94,7 @@ bool readArgs(args *a, int argc, char **argv)
 				fprintf(stderr, "Please enter a size for -or output rate\n");
 				return false;
 			}
-		} // if -a
+		} // if -or
 
 
 		// -dr Droprate out of 1000
@@ -123,7 +125,37 @@ bool readArgs(args *a, int argc, char **argv)
 				fprintf(stderr, "Please enter a size for -dr output rate\n");
 				return false;
 			}
-		} // if -a
+		} // if -dr
+
+		// -drb DroprateBack out of 1000
+		if ( strcmp (parg,"-drb") == 0 ) // -or for Outputrate
+		{
+			if (argc != iend-1)
+			{
+				int rate = atoi (argv[i+1]);
+				if (rate <= 0)
+				{
+					fprintf(stderr, "Droprate -drb incorrect...\n");
+					return false;
+				}
+				if(rate > 1000 || rate < 0)
+				{
+					fprintf(stderr, "Droprate -drb must be between 0-1000\n");
+					return false;
+				}
+				a->nDropRateBack = rate;
+
+
+				i++;
+				continue;
+			}
+			else
+			{
+				fprintf(stderr, "Please enter a size for -drb output rate\n");
+				return false;
+			}
+		} // if -drb
+
 
 
 		// -pa Print ARP TABLE!
@@ -247,8 +279,16 @@ int main(int argc, char **argv)
 	if (a.nDropRate != 0)
 	{
 		printf("Setting droprate to %d/1000\n", a.nDropRate);
-		devInjOne->setDropRate(a.nDropRate);
 		devInjTwo->setDropRate(a.nDropRate);
+		if (a.nDropRateBack != 0)
+		{
+			printf("Setting droprate-Back to %d/1000\n", a.nDropRateBack);
+			devInjOne->setDropRate(a.nDropRateBack);
+		}
+		else
+		{
+			devInjOne->setDropRate(a.nDropRate);
+		}
 
 	}
 

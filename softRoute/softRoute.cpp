@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 
 	if (a.nDropRate != 0)
 	{
-		printf("Setting droprate to %n/1000\n", a.nDropRate);
+		printf("Setting droprate to %d/1000\n", a.nDropRate);
 		devInjOne->setDropRate(a.nDropRate);
 		devInjTwo->setDropRate(a.nDropRate);
 

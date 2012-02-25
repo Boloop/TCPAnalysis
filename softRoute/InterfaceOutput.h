@@ -50,6 +50,8 @@ private:
 	BufferQueue			*m_pBufferQueue;
 	bool				 m_bIsDead;
 
+	int					 m_nDropRate;
+
 
 public:
 	InterfaceOutput(char*);

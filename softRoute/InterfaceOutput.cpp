@@ -25,6 +25,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_nOutputRate = 0;
 	m_tvNextPacket.tv_sec = 0;
 	m_tvNextPacket.tv_usec = 0;
+	m_nDropRate = 0;
 
 
 }
@@ -292,6 +293,17 @@ void InterfaceOutput::Execute()
 			usleep((useconds_t)t);
 		}
 
+		//Drop based on dropRate
+		bool drop = false;
+		if (m_nDropRate != 0)
+		{
+			int rnd = rand()%1000;
+			if(rnd < m_nDropRate)
+				drop = true;
+
+		}
+
+
 		WTPacket pack((char*)buf, size);
 		bool processed = pack.process();
 
@@ -318,8 +330,16 @@ void InterfaceOutput::Execute()
 
 
 		//TX
-		if (m_bPrintPackets) printf("Injecting\n");
-		pcap_inject(m_pDev, (void*)buf, size);
+		if (!drop)
+		{
+			if (m_bPrintPackets) printf("Injecting\n");
+				pcap_inject(m_pDev, (void*)buf, size);
+		}
+		else
+		{
+			if (m_bPrintPackets) printf("Dropped\n");
+		}
+
 
 	}
 

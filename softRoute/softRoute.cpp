@@ -18,6 +18,7 @@ struct args
 	bool bPrintPacketsIn;
 	bool bPrintPacketsOut;
 	int nOutputRate;
+	int nDropRate;
 };
 
 void intArgs(args *a)
@@ -29,6 +30,7 @@ void intArgs(args *a)
 	a->bPrintPacketsIn = false;
 	a->bPrintPacketsOut = false;
 	a->nOutputRate = 0;
+	a->nDropRate = 0; //
 
 }
 
@@ -91,6 +93,38 @@ bool readArgs(args *a, int argc, char **argv)
 				return false;
 			}
 		} // if -a
+
+
+		// -dr Droprate out of 1000
+		if ( strcmp (parg,"-dr") == 0 ) // -or for Outputrate
+		{
+			if (argc != iend-1)
+			{
+				int rate = atoi (argv[i+1]);
+				if (rate <= 0)
+				{
+					fprintf(stderr, "Droprate -dr incorrect...\n");
+					return false;
+				}
+				if(rate > 1000 || rate < 0)
+				{
+					fprintf(stderr, "Droprate -dr must be between 0-1000\n");
+					return false;
+				}
+
+				a->nDropRate = rate;
+
+
+				i++;
+				continue;
+			}
+			else
+			{
+				fprintf(stderr, "Please enter a size for -dr output rate\n");
+				return false;
+			}
+		} // if -a
+
 
 		// -pa Print ARP TABLE!
 		if ( strcmp (parg,"-pa") == 0 )

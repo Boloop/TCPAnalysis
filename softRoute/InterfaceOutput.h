@@ -64,6 +64,7 @@ public:
 	void setOutputRate(int);
 
 	void setUpBufferWithSize(int);
+	void setDropRate(int);
 
 	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();

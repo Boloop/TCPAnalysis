@@ -346,6 +346,11 @@ void InterfaceOutput::Execute()
 	free(buf);
 }
 
+void InterfaceOutput::setDropRate(int dr)
+{
+	m_nDropRate = dr;
+}
+
 InterfaceOutput::~InterfaceOutput() {
 	// TODO Auto-generated destructor stub
 

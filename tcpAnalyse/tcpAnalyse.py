@@ -59,7 +59,7 @@ if __name__ == "__main__":
 	if hasFlag("-h", sys.argv[1:]):
 		print "Help!"
 		print " -cong        show congestion"
-		print " -rtt         show round trip time"
+		print " -rtt(ts)     show round trip time"
 		print " -data        show dataTXrate/throughoutput"
 		sys.exit()
 	
@@ -81,6 +81,8 @@ if __name__ == "__main__":
 	if not p.open(path):
 		print "whoops?"
 		#print ("Incorrect header. :( magic number was {:x}".format(p.magicNumber))
+		
+	
 	
 	print "Pcap file open details:"
 	print "R: {0} V:{1}.{2} NetType: {3}".format( p.reversed, p.versionNumberMajor, p.versionNumberMinor, p.netType) 
@@ -89,8 +91,13 @@ if __name__ == "__main__":
 		print "Does not support this Link Type :( QUITTING"
 		sys.exit() 
 	
+	#get filename?
+	fn = path.split("/")[-1]
+	
 	
 	tcpCon = None
+	
+	
 	
 	while 1:
 		packet = p.nextPack()
@@ -144,7 +151,7 @@ if __name__ == "__main__":
 		print ipa+" <<  BACKWARD << "+ipb+" ["+str(len(tcpCon.backward))+"]["+str(len(tcpCon.backwardECN))+"]" 
 		count = tcpCon.getPacketCount()
 		drop = count/100
-		drop = 0
+		drop = 4
 		print "has {0} packets, dropping last {1}".format(count, drop)
 		drop = -1-drop
 		
@@ -172,11 +179,14 @@ if __name__ == "__main__":
 		if showCong:
 			#Congestion Window
 			wints, winwin = tcpCon.unackdPackets()
+			wints, winwin = (wints[:drop],winwin[:drop])
+			wints += [wints[-1]]
+			winwin += [0]
 			congwinplot = gp.Gnuplot()
 			congwinplot.xlabel("time")
 			congwinplot.ylabel("Congestion Window size")
 			print "ok", wints[-1],winwin[-1]
-			congwindata = gp.Data(wints[:drop],winwin[:drop], with_="filledcurves", title="Congestion Window")
+			congwindata = gp.Data(wints,winwin, with_="filledcurves", title="Congestion Window")
 		
 			rtsts, rtsrts, l = tcpCon.getRetransmits()
 		
@@ -226,6 +236,8 @@ if __name__ == "__main__":
 					congwinplot.plot(congwindata, rtsdata, ecndata)
 			else:
 				congwinplot.plot(congwindata, ecndata)
+			
+			congwinplot.hardcopy(fn+'.png',terminal = 'png')
 			
 		
 		if showRTT:

@@ -133,6 +133,7 @@ bool readArgs(args *a, int argc, char **argv)
 			if (argc != iend-1)
 			{
 				int rate = atoi (argv[i+1]);
+				//FIXME atoi outputs 0 on error, can't parse "0"... Fail
 				if (rate <= 0)
 				{
 					fprintf(stderr, "Droprate -drb incorrect...\n");

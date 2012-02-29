@@ -17,7 +17,7 @@ class NSListen(threading.Thread):
 		self.soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.lock = threading.Lock()
 		self.sendlock = threading.Lock()
-		self.cond = threading.Condition()
+		self.connslock = threading.Condition()
 		self.isDead = False
 		
 		self.conns = []
@@ -27,9 +27,35 @@ class NSListen(threading.Thread):
 		self.soc.setblocking(0)
 		self.soc.settimeout(1)
 		
-	def accept(self):
-	
-		pass
+	def accept(self, to=1):
+		result = None
+		i= 0
+		self.connslock.acquire()
+		for c, a in self.conns:
+			if a == False:
+				result = c
+				break
+			i += 1
+		if result:
+			self.conns[i] = (c, True)
+			self.connslock.release()
+			return result
+		 
+		 
+		 
+		#Else no there wait
+		self.connslock.wait(to)
+		i = 0
+		for c, a in self.conns:
+			if a == False:
+				result = c
+				self.conns[i] = (c, True)
+				break
+			i += 1
+			
+				
+		self.connslock.release()
+		return result
 	
 	def send(self, d, ipport):
 		"""
@@ -63,9 +89,10 @@ class NSListen(threading.Thread):
 			
 			#Is that a connection already here?
 			found = None
-			with self.lock:
+			with self.connslock:
 				
-				for c in self.conns:
+				for c, a in self.conns:
+					print "Ittering", c, a
 					if c.ourpack(nspack, ipport):
 						found = c
 						break
@@ -81,9 +108,12 @@ class NSListen(threading.Thread):
 				
 				#Send synack!
 				nsconn.ackSyn()
+				nsconn.ackn = nspack.seqn
 				
-				with self.lock:
-					self.conns.append(nsconn)
+				self.connslock.acquire()
+				self.conns.append((nsconn, False))
+				self.connslock.notify()
+				self.connslock.release()
 				
 				
 			else:

@@ -21,6 +21,8 @@ class NSPack(object):
 		
 		self.ipport = None
 		
+		self.payload = ""
+		
 		if data:
 			self.valid = self.readData(data)
 		
@@ -31,10 +33,15 @@ class NSPack(object):
 		
 			self.synf = bool( flagbyte & 1 )
 			self.ackf = bool( flagbyte & 2 )
+			
+			self.payload = data[17:]
 		except:
 			return False
 		return True
-			
+	
+	def hasPayload(self):
+		return len(self.payload) != 0
+	
 	def justSyn(self):
 		"""
 		Will return boolean if this is just a syn for a new connection
@@ -56,4 +63,6 @@ class NSPack(object):
 		if self.ackf: flagbyte += 2
 		
 		self.header = struct.pack(">IBIII", self.connid, flagbyte, self.seqn, self.ackn, self.recv)
+		
+		self.data = self.header+self.payload
 

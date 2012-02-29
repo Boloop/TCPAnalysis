@@ -4,6 +4,8 @@ import sys
 
 port = int(sys.argv[1])
 
+accl = []
+
 print "Create"
 a = NSListen.NSListen()
 print "Bind"
@@ -16,9 +18,33 @@ print "start"
 a.start()
 
 print "listening..."
-raw_input("Enter to quit")
-a.isDead = True
 
+
+print "Accepting Connections in 10 seconds"
+while 1:
+	r = a.accept(10)
+	if r:
+		print r
+		accl.append(r)
+		break
+	else:
+		print "no connection"
+		break
+
+
+
+print "Got a connection, wait for data to recv"
+if len(accl) > 0:
+	print "Recv", accl[0].read(5)
+
+print "Killing connections"
+for b in accl:
+	print "killing", b
+	b.close()
+
+print "killed all"
+a.isDead = True
 print "Waiting to join"
 a.join()
-print "Ended"
+print "Ended server"
+

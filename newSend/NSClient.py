@@ -29,6 +29,8 @@ class NSClient(threading.Thread):
 		self.isDead = False
 		
 		self.nsconn = NSConnection.NSConnection()
+		
+		self.synsent = None
 	
 	def connect(self, ipport):
 		
@@ -43,6 +45,7 @@ class NSClient(threading.Thread):
 		nsp.create()
 		
 		self.start()
+		self.synsent = time.time()
 		self.soc.sendto(nsp.header, self.ipport)
 		self.changeState(STATE_SYN)
 		
@@ -56,8 +59,7 @@ class NSClient(threading.Thread):
 		if not result:
 			#Failed :(
 			print "Failed"
-			self.isDead = True
-			self.join()
+			self.close()
 		
 		return result
 		
@@ -87,8 +89,14 @@ class NSClient(threading.Thread):
 			
 			if self.waitForState(STATE_SYN, to=1):
 				break
+		#ts = time.time()
+		#rtt = ts-self.synsent
 		
-		print "syn has come!"
+		#print "handshake rtt =", rtt
+		#self.nsconn.rttim.rtt = rtt
+		#self.nsconn.ackn 
+		
+		print "syn has sent!"
 		#Now we can listen for datas
 		while 1:
 			if self.isDead:
@@ -110,6 +118,13 @@ class NSClient(threading.Thread):
 			self.nsconn.recvPack(nsp, tr)
 			
 			if self.nsconn.state == NSConnection.STATE_CONNECTED:
+				
+				rtt = tr-self.synsent
+				print "handshake rtt =", rtt
+				self.nsconn.rttim.rtt = rtt
+				self.nsconn.ackn = nsp.seqn
+				self.nsconn.connid = nsp.connid
+				self.nsconn.ipport = ipport
 				self.changeState(STATE_CONNECTED)
 			
 				
@@ -124,9 +139,17 @@ class NSClient(threading.Thread):
 		self.state = state
 		self.statecond.notify()
 		self.statecond.release()
+		
+	def send(self, data):
+		time.sleep(1)
+		self.nsconn.send(data)
 	
 	def close(self):
+	
+	
 		self.isDead = True
+		
+		self.nsconn.close()
 		self.join()
 		self.soc.close()
 		

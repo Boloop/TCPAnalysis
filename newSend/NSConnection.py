@@ -50,9 +50,11 @@ class RetransmitTimer(threading.Thread):
 			self.datalock.wait(to)
 			
 			#Check for data
+			print "RTimer, Sendbuff", self.data
 			print "Timer, checking for send data"
 			if len(self.data) == 0:
 				self.datalock.release()
+				to = 1
 				print "Timer, No data :("
 				continue
 			
@@ -166,6 +168,20 @@ class NSConnection(object):
 		nsp.create()
 		
 		self.sendsoc(nsp.header, (self.dip, self.dport))
+	
+	def sendAck(self):
+		"""
+		Once got a data will reply with ack back, this will generate an ack packet and send
+		it
+		"""
+		nsp = NSPack.NSPack()
+		nsp.synf = False
+		nsp.ackf = False
+		nsp.connid = self.connid
+		nsp.ackn = self.ackn
+		nsp.create()
+		
+		self.sendsoc(nsp.header, (self.dip, self.dport))
 		
 	#def sendSynAck(self):
 			
@@ -193,6 +209,9 @@ class NSConnection(object):
 		Add data into receive buffer
 		"""
 		
+		print "nsconn addIntoRecvBuf"
+		
+		
 		#Check if seq is already in there
 		present = False
 		
@@ -205,6 +224,12 @@ class NSConnection(object):
 			if present:
 				print "Repeated SequenceNumber"
 				return False
+			else:
+				#If next seq, increment ack
+				print "seq == self.ack?", seq, self.ackn
+				if seq == self.ackn:
+					self.ackn += len(data)+1
+					print "new ackn", self.ackn
 			
 			i = 0
 			for s, d, ts in self.rcvBuff:
@@ -292,6 +317,14 @@ class NSConnection(object):
 		elif nspack.hasPayload():
 			print "has payload!"
 			self.addIntoRecvBuf(nspack.payload, nspack.seqn, ts)
+			#ack has been updated, send ack back!
+			self.sendAck()
+			
+		else:
+			#No Syn/Ack flag, read Ack number and update ourself
+			print "Got ackheader only", nspack.ackn
+			self.updateToAck(nspack.ackn)
+			
 			
 	
 	
@@ -361,7 +394,29 @@ class NSConnection(object):
 			#Signal, And kickstart retransmit timer
 			self.sendLock.notify()
 		
-			
+	
+	
+	def updateToAck(self, n):
+		"""
+		We got Ack of n, clear send buffer of data up to n,
+		May wish to put congestion control here?
+		"""
+		i = 0
+		rm = []
+		with self.sendLock:
+			for s, d, ts in self.sendBuff:
+				print "updateToAck s < n", s, n
+				if s < n:
+					i += 1
+					rm.append((s,d,ts))
+				else:
+					break
+		
+			print "updateToAck i", i
+			for x in rm:
+				self.sendBuff.remove(x)
+			print "updatetoAck SB", self.sendBuff
+					
 	
 	def send(self, data, to=1):
 		print "NS con Send!"

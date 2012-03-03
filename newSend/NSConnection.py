@@ -11,6 +11,8 @@ STATE_NONE = 0
 STATE_SYNACK = 1
 STATE_CONNECTED = 2
 
+CONG_SLOWSTART = 1
+
 
 
 class RetransmitTimer(threading.Thread):
@@ -136,6 +138,8 @@ class NSConnection(object):
 		self.sendCongSegs = 1
 		self.sendMSS = 1000 
 		self.seqn = 0
+		self.congMode = CONG_SLOWSTART
+		self.tsLastChange = 0 
 		
 		#data, datalock, client):
 		self.rttim = RetransmitTimer(self.sendBuff, self.sendLock, self)
@@ -228,7 +232,7 @@ class NSConnection(object):
 				#If next seq, increment ack
 				print "seq == self.ack?", seq, self.ackn
 				if seq == self.ackn:
-					self.ackn += len(data)+1
+					self.ackn += len(data)
 					print "new ackn", self.ackn
 			
 			i = 0
@@ -389,9 +393,16 @@ class NSConnection(object):
 			print "buff to send:", toSend
 			seq = self.seqn
 			print "seq set as", seq
-		
-			self.sendBuff.append((seq, data, None))
-			#Signal, And kickstart retransmit timer
+			
+			
+			while len(data) != 0:
+				a = data[:self.sendMSS]
+				data = data[self.sendMSS:]
+				self.sendBuff.append((seq, a, None))
+				seq += len(a)
+				#Signal, And kickstart retransmit timer
+			
+			self.seq = seq
 			self.sendLock.notify()
 		
 	
@@ -405,8 +416,8 @@ class NSConnection(object):
 		rm = []
 		with self.sendLock:
 			for s, d, ts in self.sendBuff:
-				print "updateToAck s < n", s, n
-				if s < n:
+				print "updateToAck s < n", s+len(d), n
+				if (s+len(d)) <= n:
 					i += 1
 					rm.append((s,d,ts))
 				else:

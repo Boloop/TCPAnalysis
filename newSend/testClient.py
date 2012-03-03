@@ -14,7 +14,7 @@ if not r:
 	sys.exit(-1)
 	
 print "send"
-a.send("Hello")
+a.send("Hello"*500)
 print "Sleeping"
 time.sleep(3)
 

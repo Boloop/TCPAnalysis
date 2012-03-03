@@ -35,7 +35,11 @@ while 1:
 
 print "Got a connection, wait for data to recv"
 if len(accl) > 0:
-	print "Recv", accl[0].read(5)
+	while 1:
+		c = accl[0].read(5)
+		print "Recv", c
+		if not c:
+			break 
 
 print "Killing connections"
 for b in accl:

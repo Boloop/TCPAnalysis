@@ -141,7 +141,7 @@ class NSClient(threading.Thread):
 		self.statecond.release()
 		
 	def send(self, data):
-		time.sleep(1)
+		#time.sleep(1)
 		self.nsconn.send(data)
 	
 	def close(self):

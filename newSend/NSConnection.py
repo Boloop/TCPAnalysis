@@ -174,6 +174,11 @@ class NSConnection(object):
 		self.rttim = RetransmitTimer(self.sendBuff, self.sendLock, self)
 		self.rttim.start()
 		
+		#Tripple Dup Ack detecting
+		self.lastAck = 0
+		self.lastAckRepeats = 0
+		self.lastAckTS = 0
+		
 	
 	def congOnAck(self, segs):
 		"""
@@ -473,19 +478,36 @@ class NSConnection(object):
 			#Congestion Control
 			self.congOnAck(i)
 			
+			if n == self.lastAck:
+				self.lastAckRepeats += 1
+				if self.lastAckRepeats >= 3:
+					#Triple Dupe
+					self.onTripleDup()
+			
+			else:
+				if n > self.lastAck:
+					self.lastAck = n
+			
 			self.sendLock.notify()	
+			
+	def onTripleDup(self):
+		"""
+		Action to take on tripple dupe Ack
+		"""
+		
+		print "Got Tripple Duplicate Ack"
 	
 	def send(self, data, to=1):
-		#print "NS con Send!"
+		print "NS con Send!"
 		#Calculate size
 		with self.sendLock:
 			if self.sendBuffSize() >= self.sendMSS*self.sendCongSegs:
 				#Pause
-				#print "Send buffer full, please hold"
+				print "Send buffer full, please hold"
 				return False
 			else:
 				#push it on
-				#print "Pushing on data to buffer"
+				print "Pushing on data to buffer"
 				self.pushOnSendBuff(data)
 				return True
 	

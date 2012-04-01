@@ -1,9 +1,18 @@
 import time
+import SSPack
+import math
 
 PHASE_SLOWSTART = 1
 PHASE_CONGESTIONAVOIDANCE = 2
 PHASE_FASTRETRANSMIT = 3
 PHASE_FASTRECOVERY = 4
+
+phaseToText = {
+	PHASE_SLOWSTART:"SlowStart",
+	PHASE_CONGESTIONAVOIDANCE : "Congestion Avoidance",
+	PHASE_FASTRETRANSMIT : "Fast Retransmit",
+	PHASE_FASTRECOVERY : "Fast Recovery"
+}
 
 class SSSender():
 	
@@ -24,6 +33,18 @@ class SSSender():
 		self.ssThreshold = 1000
 		self.fastRecoveryRetransmitNo = 0
 		
+		self.sendCall = None
+		self.timeNow = time.time # This is to overide for testing...
+		
+	def __str__(self):
+		"""
+		
+		"""
+		s = "oW: "+str(len(self.onWire))+" CongWin: "+str(self.congWin)+" CongPhase: "+phaseToText[self.congPhase]
+		s += " ssThres: "+str(self.ssThreshold)+" RTTa:"+str(self.RTTavg)
+		
+		return s
+		
 	def onAck(self, pack):
 		"""
 		First method called on getting A packet back, This will just
@@ -33,27 +54,43 @@ class SSSender():
 		#Recalculate RTT?
 		self.recalcRTTonPack(pack)
 		
-		#Tick off Packets
-		ackdAmount = self.ackPackets(pack)
+		
 		
 		#Got a TrippleDupe Ack?
 		dupeAck = False
+		print "this Ack,",pack.ackNo, "lastAck", self.lastAck
 		if pack.ackNo == self.lastAck:
 			self.duplicateAckCount += 1
 			dupeAck = True
 		else:
 			self.duplicateAckCount = 0
+			
+		#Tick off Packets - goes *AFTER* checking for dupe (this changes self.lastAck)
+		ackdAmount = self.ackPackets(pack)
 		
 		if self.duplicateAckCount >= 3:
 			#TDDAck Detected, Have we already encountered one in the past RTT?
-			if self.lastTDATS + self.RTTavg < time.time():
+			if self.lastTDATS + self.RTTavg < self.timeNow():
 				#new TDA event
 				self.tdaEvent()
 		
 		partialAck = len(pack.ackList) != 0
 		
+		print "onAck - AckNo:"+str(pack.ackNo)+ " Acked:"+str(ackdAmount)+" dupeAck:"+str(dupeAck)
+		
 		#Send a new segment (or Two?)
 		self.sendNewData(dupeAck=dupeAck, ackdAmount=ackdAmount, partialAck=partialAck)
+	
+	def segsOnWire(self):
+		"""
+		Will return list of Segs on wire
+		"""
+		
+		result = []
+		for sn, ts, payload in self.onWire:
+			result.append(sn)
+			
+		return result
 	
 	def sendNewData(self, dupeAck=False, ackdAmount=1, partialAck=False):
 		"""
@@ -66,10 +103,10 @@ class SSSender():
 		
 		if self.congPhase == PHASE_SLOWSTART:
 			self.congWin += 1
-			self.lastCongIncrease = time.time()
+			self.lastCongIncrease = self.timeNow()
 			
 		elif self.congPhase == PHASE_CONGESTIONAVOIDANCE:
-			if self.lastCongIncrease + self.RTTavg < time.time():
+			if self.lastCongIncrease + self.RTTavg < self.timeNow():
 				self.congWin += 1
 				self.lastCongIncrease += self.RTTavg
 				
@@ -101,7 +138,7 @@ class SSSender():
 			#Got smallest index
 			newDataToSend = (self.onWire[sindex][0], self.onWire[sindex][2])
 			#update TS
-			self.onWire[sindex] = (self.onWire[sindex][0], time.time(), self.onWire[sindex][2])
+			self.onWire[sindex] = (self.onWire[sindex][0], self.timeNow(), self.onWire[sindex][2])
 			
 			self.fastRecoveryRetransmitNo = newDataToSend[0]
 			self.congPhase = PHASE_FASTRECOVERY
@@ -123,7 +160,7 @@ class SSSender():
 					ncong = len(self.onWire)+1
 				
 				self.congWin = ncong
-				self.lastCongIncrease = time.time()
+				self.lastCongIncrease = self.timeNow()
 				
 				self.congPhase = PHASE_CONGESTIONAVOIDANCE
 			elif partialAck:
@@ -140,14 +177,26 @@ class SSSender():
 			# Can Never EVER get Not Acking the missing data "AND" not a partial ack
 			# In Theory, unless something bad is happening.
 		
+		
+		#Transmit new data
+		if newDataToSend != None:
+			p = SSPack.SSPack()
+			p.segNo, p.payload = newDataToSend
+			self.sendPacket(p)
+		
+		
 		#Space to retransmit new data?
-		if newDataToSend == None and len(self.onWire) < self.congWin:
+		while len(self.onWire) < self.congWin:
 			#Grab new data
 			newdata = "\x00"*1400
 			nseg = self.newSegNum
 			self.newSegNum += 1
-			self.onWire.append( (nsg, time.time(), newdata) )
-			newDataToSend = (nsg ,newdata)
+			self.onWire.append( (nseg, self.timeNow(), newdata) )
+			newDataToSend = (nseg ,newdata)
+			
+			p = SSPack.SSPack()
+			p.segNo, p.payload = newDataToSend
+			self.sendPacket(p)
 	
 	def getFirstUnAckdPacket(self, updateTS=None):
 		#Get smallest data segment, that is our missing segment
@@ -191,9 +240,9 @@ class SSSender():
 		"""
 		With new echo'd TS will recalculate the new RTT
 		"""
-		echodTS = pack.lastDestinationTS
+		echodTS = self.timeNow() - pack.lastDestinationTS
 		if self.RTTavg == None:
-			self.RTTavg = echodTS
+			self.RTTavg = echodTS 
 			self.RTTdev = 0
 		else:
 			self.RTTavg = self.RTTavg*0.9 + echodTS*0.1
@@ -206,16 +255,50 @@ class SSSender():
 		"""
 		
 		rml = []
+		smallest = None # For lastAck
 		#For upto and including the pack.lastAck
 		for sn, ts, payload in self.onWire:
 			if sn <= pack.ackNo:
 				rml.append((sn, ts, payload))
 			elif sn in pack.ackList:
 				rml.append((sn, ts, payload))
+			else:
+				
+				if smallest == None:
+					smallest = sn
+				elif sn < smallest:
+					smallest = sn
 		
 		#Got removal list
 		for r in rml:
 			self.onWire.remove(r)
-			
+		
+		#Get smallest in ackPackets and set lastAck as -1
+		if smallest != None:
+			self.lastAck = smallest - 1
+			 
 		return len(rml)
+	
+	def sendPacket(self, pack):
+		"""
+		This is a PRIVATE method, called internally to send the call send method
+		"""
+		
+		self.sendCall(pack)
+		
+	def sendOnIdle(self, pack=None):
+		"""
+		Test, to send first packet!
+		"""
+		p = SSPack.SSPack()
+		data = "\x00"*1400
+		p.payload = data
+		p.segNo = self.newSegNum
+		n = (self.newSegNum, self.timeNow(), data)
+		self.onWire.append(n)
+		self.newSegNum += 1
+		self.sendPacket(p)
+		
+		
+		
 		

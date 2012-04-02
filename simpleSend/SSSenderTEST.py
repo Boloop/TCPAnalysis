@@ -1,5 +1,6 @@
 import SSSender
 import SSPack
+import time
 
 def onSend(dataList=[]):
 	def _onSend(pack):
@@ -37,6 +38,7 @@ s = SSSender.SSSender()
 t = timer()
 s.sendCall = onSend(dataList=onSWire)
 s.timeNow = t.getTime
+s.rtTimer.timeNow = t.getTime
 print s
 print "SoW"+ str(s.segsOnWire())
 print "Send First Segment"
@@ -177,3 +179,9 @@ print "After 6: la:", s.lastAck, "dac", s.duplicateAckCount, "oW:", s.segsOnWire
 print s
 print "SoW"+ str(s.segsOnWire())
 print 
+
+print "Sleep for 5"
+time.sleep(5)
+
+print "DELETING"
+s.__del__()

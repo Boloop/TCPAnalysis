@@ -1,6 +1,7 @@
 import time
 import SSPack
 import math
+import threading
 
 PHASE_SLOWSTART = 1
 PHASE_CONGESTIONAVOIDANCE = 2
@@ -13,6 +14,88 @@ phaseToText = {
 	PHASE_FASTRETRANSMIT : "Fast Retransmit",
 	PHASE_FASTRECOVERY : "Fast Recovery"
 }
+
+
+class RTTimer(threading.Thread):
+	def __init__(self):
+		"""
+		"""
+		threading.Thread.__init__(self)
+		self.timeNow = time.time
+		self.wakeupAt = -1
+		self.rtoCall = None # What to call on timeout
+		self.lock = threading.Condition()
+		self.interupted = False # Flag to check on signal to know if we're being reset
+		self.dead = False
+		self.timedOut = True
+		self.timedOutCnt = 2
+		
+	def reset(self, wakeupAt=None):
+		"""
+		Will reset the timer
+		"""
+		print "RS to",wakeupAt
+		
+		with self.lock:
+			#change the value
+			#if self.wakeupAt == -1:
+			#	self.wakeupAt = wakeupAt
+			#	self.timedOut = False
+			#	self.timedOutCnt = 0
+			#elif self.wakeupAt > wakeupAt:
+				self.wakeupAt = wakeupAt
+				self.timedOut = False
+				self.timedOutCnt = 0
+				self.lock.notify()
+	
+	
+	def disable(self):
+		"""
+		Disable self
+		"""
+		
+		with self.lock:
+			self.timedOut = True
+			self.timedOutCnt = 2
+	
+	def run(self):
+		
+		while True:
+			#Check if dead
+			print "Checking if Dead"
+			with self.lock:
+				if self.dead: 
+					print "Yep, GoodNight!"
+					break
+			
+				#Check if need to sleep
+				sleeptime =  self.wakeupAt - self.timeNow()
+				print "sleepTime = ",sleeptime
+				if sleeptime <= 0:
+					#Timed Out!
+					if not self.timedOut:
+						print "not TO BEFORE, WE'RE TO-ING"
+						self.timedOut = True
+						self.timedOutCnt = 0
+					else:
+						print "timed out alread, Sleeping..."
+						#Already timed out?
+						self.lock.wait(1.0) #Low CPU usage!
+				else:
+					#sleep!
+					self.timedOut = False
+					if sleeptime > 1:
+						sleeptime = 1.0
+					
+					self.lock.wait(sleeptime)
+			
+			#Go out of lock, call RTOCALL outside lock!
+			if self.timedOut:
+				self.timedOutCnt += 1
+				if self.timedOutCnt == 1:
+					#First time call method!
+					if self.rtoCall != None:
+						self.rtoCall()
 
 class SSSender():
 	
@@ -36,6 +119,14 @@ class SSSender():
 		self.sendCall = None
 		self.timeNow = time.time # This is to overide for testing...
 		
+		self.rtTimer = RTTimer()
+		self.rtTimer.timeNow = time.time
+		self.rtTimer.rtoCall = self.timedOutEvent
+		
+		self.rtTimer.start()
+		
+		self.lock = threading.Lock()
+		
 	def __str__(self):
 		"""
 		
@@ -50,11 +141,11 @@ class SSSender():
 		First method called on getting A packet back, This will just
 		care for only the Acknowedgement numbers for data that was sent.
 		"""
-		
+		self.lock.acquire()
 		#Recalculate RTT?
 		self.recalcRTTonPack(pack)
 		
-		
+		partialAck = len(pack.ackList) != 0
 		
 		#Got a TrippleDupe Ack?
 		dupeAck = False
@@ -65,6 +156,7 @@ class SSSender():
 		else:
 			self.duplicateAckCount = 0
 			
+				
 		#Tick off Packets - goes *AFTER* checking for dupe (this changes self.lastAck)
 		ackdAmount = self.ackPackets(pack)
 		
@@ -74,13 +166,41 @@ class SSSender():
 				#new TDA event
 				self.tdaEvent()
 		
-		partialAck = len(pack.ackList) != 0
+		
 		
 		print "onAck - AckNo:"+str(pack.ackNo)+ " Acked:"+str(ackdAmount)+" dupeAck:"+str(dupeAck)
 		
+		
+		
 		#Send a new segment (or Two?)
 		self.sendNewData(dupeAck=dupeAck, ackdAmount=ackdAmount, partialAck=partialAck)
+		
+		self.lock.release()
 	
+	def resetTimer(self):
+		"""
+		Private call that will reset the timer, by looking into the list of on wire packets and making the timer wake up
+		to a new value
+		"""
+		smallest = None
+		smallbunch = None
+		for sn, ts, payload in self.onWire:
+			if smallest == None:
+				smallest = sn
+				smallbunch = ts
+			elif smallest > sn:
+				smallest = sn
+				smallbunch = ts
+		
+		if smallest == None:
+			print "Disable Timer"
+			self.rtTimer.disable()
+		else:
+			#wakeupAt = self.timeNow() + self.RTTavg*1.2 + self.RTTdev*4
+			wakeupAt = smallbunch + self.RTTavg*1.2 + self.RTTdev*4
+			print "reset timer to", wakeupAt
+			self.rtTimer.reset(wakeupAt=wakeupAt)
+		
 	def segsOnWire(self):
 		"""
 		Will return list of Segs on wire
@@ -104,14 +224,17 @@ class SSSender():
 		if self.congPhase == PHASE_SLOWSTART:
 			self.congWin += 1
 			self.lastCongIncrease = self.timeNow()
+			#self.resetTimer()
 			
 		elif self.congPhase == PHASE_CONGESTIONAVOIDANCE:
 			if self.lastCongIncrease + self.RTTavg < self.timeNow():
 				self.congWin += 1
 				self.lastCongIncrease += self.RTTavg
+			#self.resetTimer()
 				
 		elif self.congPhase == PHASE_FASTRETRANSMIT:
 			self.congWin = self.ssThreshold + 3 # Artificial inflation from TDA
+
 			
 		elif self.congPhase == PHASE_FASTRECOVERY:
 			self.congWin += 1
@@ -121,6 +244,7 @@ class SSSender():
 		#
 		
 		newDataToSend = None
+		resettimer = False
 		
 		if self.congPhase == PHASE_FASTRETRANSMIT:
 			#Get smallest data segment, that is our missing segment
@@ -142,6 +266,7 @@ class SSSender():
 			
 			self.fastRecoveryRetransmitNo = newDataToSend[0]
 			self.congPhase = PHASE_FASTRECOVERY
+			resettimer = True
 			
 		elif self.congPhase == PHASE_FASTRECOVERY:
 			#Check if we have acknowledged fast recovery packet
@@ -163,6 +288,9 @@ class SSSender():
 				self.lastCongIncrease = self.timeNow()
 				
 				self.congPhase = PHASE_CONGESTIONAVOIDANCE
+				
+				resettimer = True
+				
 			elif partialAck:
 				#deflate the window... This is RFC2582 Section 3 point 5.
 				ncong = self.congWin - ackdAmount + 1
@@ -172,7 +300,8 @@ class SSSender():
 				
 				#retransmit.
 				
-				
+		else:
+			resettimer = True		
 			
 			# Can Never EVER get Not Acking the missing data "AND" not a partial ack
 			# In Theory, unless something bad is happening.
@@ -197,6 +326,10 @@ class SSSender():
 			p = SSPack.SSPack()
 			p.segNo, p.payload = newDataToSend
 			self.sendPacket(p)
+		
+		#Reset Timer?
+		if resettimer:
+			self.resetTimer()
 	
 	def getFirstUnAckdPacket(self, updateTS=None):
 		#Get smallest data segment, that is our missing segment
@@ -285,6 +418,12 @@ class SSSender():
 		"""
 		
 		self.sendCall(pack)
+	
+	def timedOutEvent(self):
+		"""
+		Called when the timer, times out
+		"""
+		print "TIMED OUT! D: D: D: D: D: D: D: D: D: D: D: "
 		
 	def sendOnIdle(self, pack=None):
 		"""
@@ -297,8 +436,18 @@ class SSSender():
 		n = (self.newSegNum, self.timeNow(), data)
 		self.onWire.append(n)
 		self.newSegNum += 1
+		wakeupAt = self.timeNow()+120
+		self.rtTimer.reset(wakeupAt=wakeupAt)
+		
 		self.sendPacket(p)
 		
+		
+	
+	def __del__(self):
+		print "DELETE"
+		self.rtTimer.dead = True
+		if self.rtTimer.isAlive():
+			self.rtTimer.join()
 		
 		
 		

@@ -1,3 +1,5 @@
+import struct
+
 
 class SSPack():
 
@@ -8,6 +10,8 @@ class SSPack():
 		self.lastDestinationTS = 0
 		self.ackList = []	
 		self.payload = ""
+		
+		self.data = None
 	
 	def __str__(self):
 		"""
@@ -16,7 +20,54 @@ class SSPack():
 		if len(self.payload) > 0:
 			s = "Seg: "+str(self.segNo)+" DataL: "+str(len(self.payload))
 		else:
-			s = "ACK: "+str(self.ackNo)
+			s = "ACK: "+str(self.ackNo) + "Acklist: "+str(self.ackList)
 		
 		return s
-		 
+	
+	def make(self):
+		"""
+		Will make data string of packet....
+		"""
+		
+		self.data = struct.pack("lldd", self.ackNo, self.segNo, self.sourceTS, self.lastDestinationTS)
+		self.data += struct.pack("l", len(self.ackList))
+		for n in self.ackList:
+			self.data += struct.pack("l", n)
+		
+		self.data += struct.pack("l", len(self.payload))
+		
+		self.data += self.payload
+	
+	def read(self, data):
+		self.ackNo, self.segNo, self.sourceTS, self.lastDestinationTS = struct.unpack("lldd", data[0:32])
+		acklistlen = struct.unpack("l", data[32:40])[0]
+		self.ackList = []
+		
+		for i in range(acklistlen):
+			s = i*8 + 40
+			self.ackList.append(struct.unpack( "l", data[s:s+8] )[0] )
+		payloadi = 40+8*acklistlen
+		payloadsize = struct.unpack( "l", data[payloadi:payloadi+8] )
+		self.payload = data[payloadi+8:]
+		
+	def __eq__(self, p):
+		if self.ackNo != p.ackNo:
+			return False
+		if self.segNo != p.segNo:
+			return False
+		if self.sourceTS != p.sourceTS:
+			return False
+		if self.lastDestinationTS != p.lastDestinationTS:
+			return False
+		
+		for n in self.ackList:
+			if not n in p.ackList:
+				return False
+		
+		if len(self.ackList) != len(p.ackList):
+			return False
+		
+		if self.payload != p.payload:
+			return False
+		
+		return True

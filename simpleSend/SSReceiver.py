@@ -56,6 +56,8 @@ class SSReceiver():
 		ack.ackNo = self.ackNo
 		ack.ackList = self.genAckList()
 		
+		self.sendPacket(ack)
+		
 	def sendPacket(self, pack):
 		"""
 		This is a PRIVATE method, called internally to send the call send method

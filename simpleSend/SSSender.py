@@ -428,7 +428,7 @@ class SSSender():
 		"""
 		This is a PRIVATE method, called internally to send the call send method
 		"""
-		
+		pack.sourceTS = self.timeNow()
 		self.sendCall(pack)
 	
 	def timedOutEvent(self):

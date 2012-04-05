@@ -188,5 +188,6 @@ time.sleep(5)
 t += 10 # Cause a timeout 
 print "Sleep for 5, Cause TO"
 time.sleep(5)
+print s
 print "DELETING"
 s.__del__()

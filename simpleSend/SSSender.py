@@ -34,7 +34,7 @@ class RTTimer(threading.Thread):
 		"""
 		Will reset the timer
 		"""
-		print "RS to",wakeupAt
+		print "RS to",wakeupAt, "TN:",self.timeNow()
 		
 		with self.lock:
 			#change the value
@@ -106,6 +106,7 @@ class SSSender():
 		self.duplicateAckCount = 0 
 		self.lastTDATS = 0
 		self.onWire = [] # List of packet Numbers sent that are unack'd
+		self.repeatQueue = [] # This is a list of Packets that need to be retransmited.
 		
 		self.RTTavg = None
 		self.RTTdev = None
@@ -185,6 +186,7 @@ class SSSender():
 		smallest = None
 		smallbunch = None
 		for sn, ts, payload in self.onWire:
+			print "Scanning", sn, ts
 			if smallest == None:
 				smallest = sn
 				smallbunch = ts
@@ -198,7 +200,7 @@ class SSSender():
 		else:
 			#wakeupAt = self.timeNow() + self.RTTavg*1.2 + self.RTTdev*4
 			wakeupAt = smallbunch + self.RTTavg*1.2 + self.RTTdev*4
-			print "reset timer to", wakeupAt
+			print "reset timer to", wakeupAt, "Time Now:", self.timeNow(), "Due to seg", smallest, "TXed at", smallbunch
 			self.rtTimer.reset(wakeupAt=wakeupAt)
 		
 	def segsOnWire(self):
@@ -309,6 +311,7 @@ class SSSender():
 		
 		#Transmit new data
 		if newDataToSend != None:
+			print "Txing newData ToSend"
 			p = SSPack.SSPack()
 			p.segNo, p.payload = newDataToSend
 			self.sendPacket(p)
@@ -316,11 +319,20 @@ class SSSender():
 		
 		#Space to retransmit new data?
 		while len(self.onWire) < self.congWin:
-			#Grab new data
-			newdata = "\x00"*1400
-			nseg = self.newSegNum
-			self.newSegNum += 1
+			print "Txing new Data (reach CongWin) ToSend"
+			if len(self.repeatQueue) > 0:
+				#Grab some packets to REPEAT!
+				nseg, newdata = self.repeatQueue[0]
+				self.repeatQueue = self.repeatQueue[1:]
+			else:
+				#Grab new data
+				newdata = "\x00"*1400
+				nseg = self.newSegNum
+				self.newSegNum += 1
+			
+			#Prepare THE CANNON!
 			self.onWire.append( (nseg, self.timeNow(), newdata) )
+			print "Time appended", self.onWire[-1][1]
 			newDataToSend = (nseg ,newdata)
 			
 			p = SSPack.SSPack()
@@ -424,6 +436,37 @@ class SSSender():
 		Called when the timer, times out
 		"""
 		print "TIMED OUT! D: D: D: D: D: D: D: D: D: D: D: "
+		
+		#Major time out, go back to Slow-Start, reset Congestion to 0. Move all packets
+		# In onWire/in flight to the repeat queue. 
+		
+		self.lock.acquire()
+		#Everything offwire/flight and into repeat queue.
+		for sn, ts, payload in self.onWire:
+			self.repeatQueue.append((sn, payload))
+		
+		self.onWire = []
+		self.congWin = 1
+		self.congPhase = PHASE_SLOWSTART
+		
+		#Send first repeated packet
+		nseg, newdata = self.repeatQueue[0]
+		self.repeatQueue = self.repeatQueue[1:]
+		
+		#Prepare THE CANNON!
+		self.onWire.append( (nseg, self.timeNow(), newdata) )
+		newDataToSend = (nseg ,newdata)
+			
+		p = SSPack.SSPack()
+		p.segNo, p.payload = newDataToSend
+		self.sendPacket(p)
+		
+		#Reset the Timer...
+		self.RTTavg = self.RTTavg*2
+		wakeupAt = self.timeNow()+self.RTTavg
+		self.rtTimer.reset(wakeupAt=wakeupAt)
+		
+		self.lock.release()
 		
 	def sendOnIdle(self, pack=None):
 		"""

@@ -248,6 +248,8 @@ if __name__ == "__main__":
 			rttplot.ylabel("Round Trip time")
 			rttdata = gp.Data(rttts[:drop],rttrtt[:drop], with_="lines")
 			rttplot.plot(rttdata)
+			
+			rttplot.hardcopy('rtt_'+fn+'.png',terminal = 'png')
 		
 		if showRTTTS:
 			#rtttsplot by timestamps
@@ -257,6 +259,8 @@ if __name__ == "__main__":
 			rtttsplot.ylabel("Round Trip time by TS")
 			rtttsdata = gp.Data(rtttsts[:drop],rtttsrtt[:drop], with_="lines")
 			rtttsplot.plot(rtttsdata)
+			
+			rtttsplot.hardcopy('rtts_'+fn+'.png',terminal = 'png')
 		
 		if showDataTX:
 			#Datarate
@@ -266,7 +270,7 @@ if __name__ == "__main__":
 			drplot.ylabel("Datarate")
 			drdata = gp.Data(drts[:drop], drdr[:drop], with_="lines")
 			drplot.plot(drdata) 
-		
+			drplot.hardcopy('data_'+fn+'.png',terminal = 'png')
 		
 		
 		

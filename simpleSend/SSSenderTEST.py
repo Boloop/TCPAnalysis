@@ -4,7 +4,7 @@ import time
 
 def onSend(dataList=[]):
 	def _onSend(pack):
-		print "Sending Pack: "+str(pack)
+		print "Sending Pack: "+str(pack)+" TS:"+str(pack.sourceTS)
 		dataList.append(pack)
 	return _onSend
 
@@ -45,6 +45,8 @@ print "Send First Segment"
 s.sendOnIdle()
 print s
 print "SoW"+ str(s.segsOnWire())
+print
+print 
 print "Ack First Segment"
 t += 1
 print t.timeval
@@ -54,8 +56,8 @@ p.lastDestinationTS = 0
 s.onAck(p)
 print s
 print "SoW"+ str(s.segsOnWire())
-
-
+print
+print
 ##
 # Ack both Segs onWire
 ##
@@ -63,7 +65,6 @@ while len(onSWire):
 	onSWire.pop()
 
 print "Ack 1+2 Segment"
-
 p = SSPack.SSPack()
 p.ackNo = 1
 p.lastDestinationTS = t.getTime()
@@ -71,7 +72,9 @@ p.lastDestinationTS = t.getTime()
 q = SSPack.SSPack()
 q.ackNo = 2
 q.lastDestinationTS = t.getTime()
-t += 1.5
+pt = t.getTime()
+t += 1.1
+print "Echo t", pt, "read t", t.getTime()
 s.onAck(p)
 s.onAck(q)
 
@@ -91,7 +94,7 @@ for pa in onSWire:
 
 while len(onSWire):
 	onSWire.pop()
-t += 1.5
+t += 1.1
 
 for ap in acklist:
 	s.onAck(ap)
@@ -109,7 +112,7 @@ p = SSPack.SSPack()
 p.ackNo = 6
 p.ackList = [8]
 p.lastDestinationTS = t.getTime()
-t += 1.3
+t += 1.2
 s.onAck(p)
 print "After 1: la:", s.lastAck, "dac", s.duplicateAckCount, "oW:", s.segsOnWire()
 print s
@@ -182,6 +185,8 @@ print
 
 print "Sleep for 5"
 time.sleep(5)
-
+t += 10 # Cause a timeout 
+print "Sleep for 5, Cause TO"
+time.sleep(5)
 print "DELETING"
 s.__del__()

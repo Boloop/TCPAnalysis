@@ -437,7 +437,7 @@ class SSSender():
 		"""
 		print "TIMED OUT! D: D: D: D: D: D: D: D: D: D: D: "
 		
-		#Major time out, go back to Slow-Start, reset Congestion to 0. Move all packets
+		# Major time out, go back to Slow-Start, reset Congestion to 0. Move all packets
 		# In onWire/in flight to the repeat queue. 
 		
 		self.lock.acquire()

@@ -35,16 +35,22 @@ if __name__ == "__main__":
 	
 	i = 0
 	while 1:
+		i += 1
 		packet = p.nextPack()
 		if not packet:
 			print "EOF"
 			break
 		
-		print "Packet:", i+1
-		i += 1
-		
 		pkt = packet.pData
 		rframe = rt.RadioTap(pkt)
+		
+		if rframe.type == rt.TYPE_MANAGEMENT:
+			continue
+		
+		print "Packet:", i
+		
+		
+		
 		#print "mTS", rframe.readFlag(rt.FLAG_TSFT)
 		#print "Rate", rframe.readFlag(rt.FLAG_RATE)
 		#print "Chan", rframe.readFlag(rt.FLAG_CHANNEL)
@@ -52,5 +58,10 @@ if __name__ == "__main__":
 		#print "Antenna", rframe.readFlag(rt.FLAG_ANTENNA_INDEX)
 		#print "RX Flags", rframe.readFlag(rt.FLAG_RX_FLAGS)
 		#print rframe.humanFlags()
+		
+		
+		
 		print rframe.humanType()
+		#print rt.binToHex(rframe.add1)
+		print rframe.humanAddresses()
 		print len(pkt)

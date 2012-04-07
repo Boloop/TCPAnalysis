@@ -1,5 +1,6 @@
 import PcapReader as pcr
 import TcpMon as tm
+import UdpMon as um
 import sys
 import Gnuplot as gp
 import dpkt
@@ -96,6 +97,7 @@ if __name__ == "__main__":
 	
 	
 	tcpCon = None
+	udpCon = None
 	
 	
 	
@@ -116,7 +118,7 @@ if __name__ == "__main__":
 								       # http://www.tcpdump.org/linktypes/LINKTYPE_LINUX_SLL.html
 		
 		#Is it an IP packet, yeah?
-		if type(eth.data) == type(dpkt.ip.IP()):
+		if type(eth.data) == type(dpkt.ip.IP()) and udpCon == None:
 			#It is, It is an ip packet!
 			ip = eth.data
 			if type(ip.data) == type(dpkt.tcp.TCP()):
@@ -130,15 +132,37 @@ if __name__ == "__main__":
 					#tcpCon.addPacket(ip.data, packet.time)
 					#print "Yay"
 				else:
-					print "Nay"
+					print "Nay-TCP"
 			
+		if type(eth.data) == type(dpkt.ip.IP()) and tcpCon == None:
+			#It is, It is an ip packet!
+			ip = eth.data
+			#print "is it UDP?"
+			if type(ip.data) == type(dpkt.udp.UDP()):
+				#it's UDP
+				#Lock And load
+				if udpCon == None:
+					udpCon = um.UdpCon(ip, packet.time)
 					
-				
+				elif udpCon.sameSocket(ip):
+					udpCon.addIPPacket(ip, packet.time)
+					#tcpCon.addPacket(ip.data, packet.time)
+					#print "Yay"
+				else:
+					print "Nay-UDP"
 		
 		
 		#print packet.time, packet.pLen
 	
 	print "File loaded"
+	if udpCon != None:
+		print "contains UDP connection"
+		#Cheeky
+		tcpCon = udpCon
+	elif tcpCon != None:
+		print "contains TCP Connection"
+	
+	
 	
 	if tcpCon:
 	

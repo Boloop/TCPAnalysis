@@ -249,10 +249,20 @@ class RadioTap(object):
 			self.add1 = self.header[4:10]
 			#print "Human Flags:", self.humanFlags(), self.type, self.subtype
 			#print "Header:", binToHex(self.header)
+			#print self.humanAddresses()
 			#print "Header:", binToHex(frame)
 			#print self.humanType()
+			
+			#This could do with a little cleaning up
 			if self.type == TYPE_CONTROL and self.subtype == SUBTYPE_CONTROL_ACK:
 				pass
+			elif self.type == TYPE_CONTROL and self.subtype == SUBTYPE_CONTROL_RTS:
+				self.add2 = self.header[10:16]
+				pass
+			elif self.type == TYPE_CONTROL and self.subtype == SUBTYPE_CONTROL_CTS:
+				self.add2 = self.header[10:16]
+				pass
+				
 			else:
 				self.add2 = self.header[10:16]
 				self.add3 = self.header[16:22]
@@ -328,8 +338,24 @@ class RadioTap(object):
 			result += "Unknown "+str(self.subtype)
 		
 		return result
-		
 	
+	def humanAddresses(self):
+		"""
+		Will return human readable string of all addresses
+		"""
+		
+		result = ""
+		
+		if self.add1 != None:
+			result += " Ad1: "+ binToHex(self.add1)
+		if self.add2 != None:
+			result += " Ad2: "+ binToHex(self.add2)
+		if self.add3 != None:
+			result += " Ad3: "+ binToHex(self.add3)
+		if self.add4 != None:
+			result += " Ad4: "+ binToHex(self.add4)
+		
+		return result
 	def getPseudoPLCPLength(self):
 		"""
 		Funny function name for working out the sizes of all the flagged feilds
@@ -345,6 +371,22 @@ class RadioTap(object):
 			result += FLAGTODATALENGTH[f]
 		
 		return result
+	
+	def containsAddress(self, add):
+		"""
+		Will return a boolean if any address equals one given
+		"""
+		
+		if self.add1 == add:
+			return True
+		if self.add2 == add:
+			return True
+		if self.add3 == add:
+			return True
+		if self.add4 == add:
+			return True
+		
+		return False
 	
 	def readFlag(self, flag):
 		"""

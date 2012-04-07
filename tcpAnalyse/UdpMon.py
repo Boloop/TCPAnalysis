@@ -204,7 +204,7 @@ class UdpCon(object):
 		
 		lastSeq = None
 		lastAck = None
-		timeOrigin = None
+		timeOrigin = self.origin
 		latestTS = None
 		
 		#copy the list
@@ -215,6 +215,7 @@ class UdpCon(object):
 		
 		times = [0]
 		window = [0]
+		onWire = []
 		
 		while True:
 			
@@ -240,32 +241,29 @@ class UdpCon(object):
 			if next == PATH_FORWARD:
 				#add onto the path forward
 				ts, dat = forward[0]
-				if lastSeq == None:
-					lastSeq = dat.segNo*1400+len(dat.payload)
-					lastAck = dat.segNo*1400
-					timeOrigin = self.origin
-					
-				
-				elif lastSeq < dat.segNo*1400:
-					lastSeq = dat.segNo*1400+len(dat.payload)
+				if not dat.segNo in onWire:
+					onWire.append(dat.segNo)
 				
 				forward = forward[1:]
 				
 			else:
+				
 				#add onto backward path!
 				ts, dat = backward[0]
 				
-				if lastAck == None:
-					noSeqYet = True
-				elif dat.ackNo*1400 > lastAck:
-					lastAck = dat.ackNo*1400
+				asegs = [dat.ackNo]
+				asegs += dat.ackList
+				
+				for a in asegs:
+					if a in onWire:
+						onWire.remove(a)
 				
 				backward = backward[1:]
 			
 			if noSeqYet:
 				continue
 			
-			dif = lastSeq - lastAck
+			dif = len(onWire)*1400
 			td = ts - timeOrigin
 			if outtype == DATA_FLOAT:
 				td = TcpMon.dfToFloat(td)

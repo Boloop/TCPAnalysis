@@ -8,7 +8,8 @@ class SSPack():
 		self.segNo = -1
 		self.sourceTS = 0
 		self.lastDestinationTS = 0
-		self.ackList = []	
+		self.ackList = []
+		self.rackList = [] # Reduced Ack list!	
 		self.payload = ""
 		
 		self.data = None
@@ -37,6 +38,39 @@ class SSPack():
 		self.data += struct.pack("l", len(self.payload))
 		
 		self.data += self.payload
+		
+	def ackListToR(self):
+		"""
+		Will produced reduced Acklist!
+		"""
+		
+		self.rackList = []
+		i = 0
+		baseSeg = None
+		count = 0
+		while i < len(self.ackList):
+			if baseSeg == None:
+				baseSeg = self.ackList[i]
+			segn = self.ackList[i]
+			#Check if Next segment is 
+			if i+1 < len(self.ackList):
+				if segn+1 = self.ackList[i+1]:
+					count += 1
+				
+				else:
+					self.rackList.append(baseSeg)
+					self.rackList.append(count)
+					count = 0:
+					baseSeg = self.ackList[i+1]
+			else:
+				self.rackList.append(baseSeg)
+				self.rackList.append(count)
+			
+			i += 1
+		
+			
+			
+		
 	
 	def read(self, data):
 		self.ackNo, self.segNo, self.sourceTS, self.lastDestinationTS = struct.unpack("lldd", data[0:32])

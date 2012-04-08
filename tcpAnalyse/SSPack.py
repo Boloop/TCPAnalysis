@@ -13,6 +13,8 @@ class SSPack():
 		self.payload = ""
 		
 		self.data = None
+		
+		self.compressor = True
 	
 	def __str__(self):
 		"""
@@ -31,8 +33,15 @@ class SSPack():
 		"""
 		
 		self.data = struct.pack("lldd", self.ackNo, self.segNo, self.sourceTS, self.lastDestinationTS)
-		self.data += struct.pack("l", len(self.ackList))
-		for n in self.ackList:
+		
+		if self.compressor:
+			self.ackListToR()
+			ackList = self.rackList
+		else:
+			ackList = self.ackList
+		
+		self.data += struct.pack("l", len(ackList))	
+		for n in ackList:
 			self.data += struct.pack("l", n)
 		
 		self.data += struct.pack("l", len(self.payload))
@@ -54,19 +63,37 @@ class SSPack():
 			segn = self.ackList[i]
 			#Check if Next segment is 
 			if i+1 < len(self.ackList):
-				if segn+1 = self.ackList[i+1]:
+				if segn+1 == self.ackList[i+1]:
 					count += 1
 				
 				else:
 					self.rackList.append(baseSeg)
 					self.rackList.append(count)
-					count = 0:
+					count = 0
 					baseSeg = self.ackList[i+1]
 			else:
 				self.rackList.append(baseSeg)
 				self.rackList.append(count)
 			
 			i += 1
+	
+	def rackToAckList(self):
+		"""
+		Will decompress reduced Acklist
+		"""
+		
+		i = 0
+		self.ackList = []
+		
+		while i < len(self.rackList):
+			o = self.rackList[i]
+			l = self.rackList[i+1]
+			self.ackList.append(o)
+			for n in xrange(l):
+				self.ackList.append(o+n+1)
+			i += 2
+			#print i, len(self.rackList)
+			#print self.rackList
 		
 			
 			
@@ -75,11 +102,20 @@ class SSPack():
 	def read(self, data):
 		self.ackNo, self.segNo, self.sourceTS, self.lastDestinationTS = struct.unpack("lldd", data[0:32])
 		acklistlen = struct.unpack("l", data[32:40])[0]
-		self.ackList = []
+		#self.ackList = []
+		ackList = []
 		
+		print "acklistlen", acklistlen
 		for i in range(acklistlen):
 			s = i*8 + 40
-			self.ackList.append(struct.unpack( "l", data[s:s+8] )[0] )
+			ackList.append(struct.unpack( "l", data[s:s+8] )[0] )
+			
+		if self.compressor:
+			self.rackList = ackList
+			self.rackToAckList()
+		else:
+			self.ackList = ackList
+			
 		payloadi = 40+8*acklistlen
 		payloadsize = struct.unpack( "l", data[payloadi:payloadi+8] )
 		self.payload = data[payloadi+8:]

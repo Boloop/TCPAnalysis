@@ -149,6 +149,11 @@ if True:
 	else:
 		print "sockettx, standing by"	
 	
+	print "Running Listening Threads"
+	tcpdump.launchListener()
+	softroute.launchListener()
+	sockettx.launchListener()
+	
 	trials = 3
 	print "running", trials, "trials per test!"
 	for droprate in [1, 100, 1000]:

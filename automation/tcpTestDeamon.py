@@ -62,18 +62,22 @@ class tcpTest(runSoft.runSoft):
 if __name__ == "__main__":
 
 
-	if len(sys.argv) < 3:
-		print "please Speicify ip, port"
+	if len(sys.argv) < 5:
+		print "please Speicify ip, port, pythonCall, pythonpath"
 		sys.exit(-1)
 	
 	ip = sys.argv[1]
 	port = sys.argv[2]
+	basePath = sys.argv[3]
+	scriptName = sys.argv[4]
 	
 	print "Running"
 	
 	sr = tcpTest()
 	sr.ip = ip
 	sr.port = port
+	sr.basePath = basePath
+	sr.scriptName = scriptName
 	
 	sr.runCommand()
 	if not sr.callSuccess:

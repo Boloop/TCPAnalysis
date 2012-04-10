@@ -41,6 +41,12 @@ class Listen(threading.Thread):
 			self.soc.bind((self.nIP, self.nPort))
 		except:
 			self.soc = None
+			
+		if self.soc != None:
+			self.soc.setblocking(0)
+			self.soc.settimeout(1)
+		
+			self.soc.listen(10)
 	
 	def removeClient(self, c):
 		if c in self.clients:

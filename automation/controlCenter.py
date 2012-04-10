@@ -131,10 +131,55 @@ if True:
 		sys.exit(-1)
 		
 	print "check and kill all tasks"
+	if tcpdump.isRunning():
+		print "killing tcpdump"
+		tcpdump.kill()
+	else:
+		print "tcpDump, standing by"
+		
+	if softroute.isRunning():
+		print "killing softroute"
+		softroute.kill()
+	else:
+		print "softroute, standing by"
+		
+	if sockettx.isRunning():
+		print "killing sockettx"
+		sockettx.kill()
+	else:
+		print "sockettx, standing by"	
 	
-	for droprate in [1, 100]:
+	trials = 3
+	print "running", trials, "trials per test!"
+	for droprate in [1, 100, 1000]:
 		#Set the drop rate!
-		pass
+		softroute.changeDataRate(100000)
+		softroute.changeDropRate(droprate)
+		softroute.execute()
+		time.sleep(1)
+		for cong in ["reno", "cubic"]:
+			for trialnum in xrange(trials):
+				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trailnum
+				tcps = "data_dr"+str(droprate)+"_c_"+cong+"_t_"+str(trialnum)
+				tcpdump.changeFileName(tcps)
+				tcpdump.execute()
+				time.sleep(0.1)
+				
+				i = 0
+				while i < 120:
+					#print "i", i
+					if sockettx.isRunning():
+						time.sleep(1)
+					i += 1
+					else:
+						break
+				
+				if sockettx.isRunning():
+					sockettx.kill()
+				
+				tcpdump.kill()
+		
+		softroute.kill()
 		
 	print "closing connections"
 	tcpdump.close()

@@ -170,7 +170,7 @@ if True:
 					#print "i", i
 					if sockettx.isRunning():
 						time.sleep(1)
-					i += 1
+						i += 1
 					else:
 						break
 				

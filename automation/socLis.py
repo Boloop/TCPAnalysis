@@ -32,6 +32,16 @@ class Listen(threading.Thread):
 		
 			self.soc.listen(10)
 		
+	def reListen(self):
+		if self.soc != None:
+			return
+			
+		try:
+			self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.soc.bind((self.nIP, self.nPort))
+		except:
+			self.soc = None
+	
 	def removeClient(self, c):
 		if c in self.clients:
 			self.clients.remove(c)

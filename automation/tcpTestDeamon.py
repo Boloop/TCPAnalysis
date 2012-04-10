@@ -78,6 +78,7 @@ if __name__ == "__main__":
 	sr.port = port
 	sr.basePath = basePath
 	sr.scriptName = scriptName
+	#sr.nPort = 9016
 	
 	sr.runCommand()
 	if not sr.callSuccess:
@@ -86,7 +87,8 @@ if __name__ == "__main__":
 	sr.kill()
 	
 	sl = socLis.Listen()
-	
+	sl.nPort = 9016
+	sl.reListen()
 	sl.commands.append("IR")
 	sl.commandactions.append(isRunning(sr))
 	

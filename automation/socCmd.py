@@ -14,6 +14,9 @@ class socCmdLisThread(threading.Thread):
 		self.data = ""
 		self.parent = parent
 		
+		self.lastComms = {}
+		
+		
 		self.d = ""
 	
 	def run(self):
@@ -23,7 +26,8 @@ class socCmdLisThread(threading.Thread):
 			
 			try:
 				self.d += self.soc.recv(1024)
-				print "Got data:", self.d
+				self.d = self.d.strip()
+				#print "Got data:", self.d
 				self.checkData()
 			except socket.timeout:
 				pass
@@ -37,16 +41,44 @@ class socCmdLisThread(threading.Thread):
 			c = self.d.split(";")
 			
 			proc = c[0]
-			self.d == ""
+			self.d = ""
 			for n in c[1:-1]:
+				n = n.strip()
 				self.d += n +";"
 			self.d += c[-1]
 			
 			#Proccess the data back
 			args = proc.split(" ")
-			print "GOT reply", str(args)
+			#print "GOT reply", str(args)
+			
+			if args[0][-1] == ":":
+				args[0] = args[0][:-1]
+				
+			#print "putting in logg", args
+			self.logInput(args)
+			
+			
 		
-		pass
+	def logInput(self, args):
+		c = args[0]
+		
+		self.lastComms[c] = (time.time(), args[1:])
+			
+	#self.lThread.waitFor("FILE", now=now)
+	
+	def waitFor(self, comd, now=None):
+		if now == None:
+			now = time.time()
+		while True:
+			#print "keys", self.lastComms.keys(), self.lastComms
+			if not comd in self.lastComms.keys():
+				#print "Not in"
+				time.sleep(0.1)
+			elif self.lastComms[comd][0] < now: # Past
+				#print "too slow"
+				time.sleep(0.1)
+			else:
+				return self.lastComms[comd][1]	
 
 class socCmd(object):
 	def __init__(self):
@@ -105,4 +137,21 @@ class socCmd(object):
 		"""
 		
 		self.doCommand(["IR"])
-		
+	
+	def isRunning(self):
+		now = time.time()
+		self.callIsRunning()
+		a = self.lThread.waitFor("IR", now=now)
+		return a[0] == "True"
+	
+	def execute(self):
+		now = time.time()
+		self.doCommand(["EX"])
+		a = self.lThread.waitFor("EX", now=now)
+		return
+	
+	def kill(self):
+		now = time.time()
+		self.doCommand(["KL"])
+		a = self.lThread.waitFor("KL", now=now)
+		return

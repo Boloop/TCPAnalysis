@@ -33,6 +33,9 @@ a.launchListener()
 
 print "Call, is running"
 a.callIsRunning()
+print "Wait for response"
+r = a.lThread.waitFor("IR")
+print "response:", r
 time.sleep(1)
 print "close again"
 a.close()

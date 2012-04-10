@@ -23,5 +23,13 @@ class softRouteClient(socCmd.socCmd):
 		now = time.time()
 		self.doCommand(["DATAR", str(rate)])
 		self.lThread.waitFor("DATAR", now=now)
-	
+
+class socketTXClient(socCmd.socCmd):
+	def __init__(self):
+		socCmd.socCmd.__init__(self)
+		
+	def changeCongestion(self, cong):
+		now = time.time()
+		self.doCommand(["CCNT", cong])
+		self.lThread.waitFor("CCNT", now=now)
 

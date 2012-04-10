@@ -5,12 +5,13 @@ to connections and perform commands/listen to the protocol
 
 import socket
 import threading
+import time
 
 class Listen(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
 		
-		self.nPort = 9011
+		self.nPort = 9014
 		self.nIP = ""
 		
 		self.dead = False
@@ -43,6 +44,7 @@ class Listen(threading.Thread):
 				break
 			
 			try:
+				last = time.time()
 				a, b = self.soc.accept()
 				#Got a
 				at = Client(a, self, b)
@@ -54,6 +56,8 @@ class Listen(threading.Thread):
 					self.clients.append(at)
 					at.start()
 			except socket.timeout:
+				if time.time() - last < 0.1:
+					break
 				pass
 		
 	def kill(self):
@@ -105,7 +109,7 @@ class Client(threading.Thread):
 					
 					for c in coms:
 						#do each command!
-						self.soc.send("C: "+c+"\r\n")
+						#self.soc.send("C: "+c+"\r\n")
 						c = c.strip()
 						self.doCommand(c.split(" "))
 						

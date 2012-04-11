@@ -102,9 +102,9 @@ if False:
 
 if True:
 	#Connect to each service!
-	tcpdump.sIP = "192.168.0.42"
-	softroute.sIP = "192.168.0.41"
-	sockettx.sIP = "192.168.0.42"
+	tcpdump.nIP = "192.168.0.42"
+	softroute.nIP = "192.168.0.41"
+	sockettx.nIP = "192.168.0.42"
 	r = tcpdump.connect()
 	if r:
 		print "connected tcpdump!"

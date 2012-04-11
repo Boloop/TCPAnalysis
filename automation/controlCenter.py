@@ -169,7 +169,7 @@ if True:
 		time.sleep(10)
 		for cong in ["reno", "cubic"]:
 			for trialnum in xrange(trials):
-				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trailnum
+				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trialnum
 				tcps = "data_dr"+str(droprate)+"_c_"+cong+"_t_"+str(trialnum)
 				tcpdump.changeFileName(tcps)
 				tcpdump.execute()

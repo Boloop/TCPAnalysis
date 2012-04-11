@@ -166,15 +166,17 @@ if True:
 		softroute.changeDropRate(droprate)
 		print "Executing softroute"
 		softroute.execute()
-		time.sleep(1)
+		time.sleep(10)
 		for cong in ["reno", "cubic"]:
 			for trialnum in xrange(trials):
 				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trailnum
 				tcps = "data_dr"+str(droprate)+"_c_"+cong+"_t_"+str(trialnum)
 				tcpdump.changeFileName(tcps)
 				tcpdump.execute()
-				time.sleep(0.1)
+				time.sleep(1)
 				
+				sockettx.changeCongestion(cong)
+				sockettx.execute()
 				i = 0
 				while i < 120:
 					#print "i", i

@@ -66,9 +66,11 @@ class socCmdLisThread(threading.Thread):
 			
 	#self.lThread.waitFor("FILE", now=now)
 	
-	def waitFor(self, comd, now=None):
+	def waitFor(self, comd, now=None, repeats=20):
 		if now == None:
 			now = time.time()
+			
+		i = 0
 		while True:
 			#print "keys", self.lastComms.keys(), self.lastComms
 			if not comd in self.lastComms.keys():
@@ -76,7 +78,11 @@ class socCmdLisThread(threading.Thread):
 				time.sleep(0.1)
 			elif self.lastComms[comd][0] < now: # Past
 				#print "too slow"
+				i += 1
 				time.sleep(0.1)
+				if repeats != None:
+					if repeats < i:
+						return self.lastComms[comd][1]	
 			else:
 				return self.lastComms[comd][1]	
 

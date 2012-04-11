@@ -160,8 +160,11 @@ if True:
 	print "running", trials, "trials per test!"
 	for droprate in [1, 100, 1000]:
 		#Set the drop rate!
+		print "Setting DataRate"
 		softroute.changeDataRate(100000)
+		print "Setting DropRate to", droprate
 		softroute.changeDropRate(droprate)
+		print "Executing softroute"
 		softroute.execute()
 		time.sleep(1)
 		for cong in ["reno", "cubic"]:
@@ -182,7 +185,10 @@ if True:
 						break
 				
 				if sockettx.isRunning():
+					print "TO"
 					sockettx.kill()
+				else:
+					print "Not TO"
 				
 				tcpdump.kill()
 		

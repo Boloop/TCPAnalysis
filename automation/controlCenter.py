@@ -158,7 +158,7 @@ if True:
 	
 	trials = 3
 	print "running", trials, "trials per test!"
-	for droprate in [1, 100, 1000]:
+	for droprate in [1, 10, 20, 50, 100, 200, 500, 1000]:
 		#Set the drop rate!
 		print "Setting DataRate"
 		softroute.changeDataRate(100000)
@@ -167,7 +167,7 @@ if True:
 		print "Executing softroute"
 		softroute.execute()
 		time.sleep(10)
-		for cong in ["reno", "cubic"]:
+		for cong in ["reno", "cubic", "veno", "westwood"]:
 			for trialnum in xrange(trials):
 				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trialnum
 				tcps = "data_dr"+str(droprate)+"_c_"+cong+"_t_"+str(trialnum)

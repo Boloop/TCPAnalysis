@@ -156,9 +156,9 @@ if True:
 	
 	
 	
-	trials = 3
+	trials = 50
 	print "running", trials, "trials per test!"
-	for droprate in [1, 10, 20, 50, 100, 200, 500, 1000]:
+	for droprate in [1, 10, 20, 50, 100, 150, 200, 500, 1000]:
 		#Set the drop rate!
 		print "Setting DataRate"
 		softroute.changeDataRate(100000)

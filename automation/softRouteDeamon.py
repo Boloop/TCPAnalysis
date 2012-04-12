@@ -97,7 +97,7 @@ class softRoute(runSoft.runSoft):
 	def formCommand(self):
 		self.command = [self.basePath, "-or", str(self.dataRate),
 			"-dr", str(self.forwarddr), "-drb", str(self.backwarddr),
-			"-a", self.arpPath, "-rl", self.retryLimit, self.int1, self.int2]
+			"-a", self.arpPath, "-rl", str(self.retryLimit), self.int1, self.int2]
 		
 
 if __name__ == "__main__":

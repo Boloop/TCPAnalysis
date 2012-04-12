@@ -75,7 +75,7 @@ def retryLimit(p):
 		
 		s.soc.send("RETL: "+str(p.retryLimit)+";\r\n")
 	
-	return _forwardDrop
+	return _retryLimit
 
 
 class softRoute(runSoft.runSoft):

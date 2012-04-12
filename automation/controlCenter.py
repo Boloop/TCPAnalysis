@@ -164,7 +164,7 @@ if True:
 			print "Setting DataRate"
 			softroute.changeDataRate(100000)
 			print "setting retry Limit to", retryLimit
-			softrout.changeRetryLimit(retryLimit)
+			softroute.changeRetryLimit(retryLimit)
 			print "Setting DropRate to", droprate
 			softroute.changeDropRate(droprate)
 			print "Executing softroute"

@@ -60,6 +60,23 @@ def forwardDrop(p):
 	
 	return _forwardDrop
 
+def retryLimit(p):
+	def _retryLimit(s, args):
+		i = None
+		if len(args)>1:
+			si = args[1]
+			try:
+				i = int(si)
+			except:
+				pass
+		
+		if i != None:
+			p.retryLimit = i
+		
+		s.soc.send("RETL: "+str(p.retryLimit)+";\r\n")
+	
+	return _forwardDrop
+
 
 class softRoute(runSoft.runSoft):
 	"""
@@ -75,11 +92,12 @@ class softRoute(runSoft.runSoft):
 		self.int1 = "eth1"
 		self.int2 = "eth2"
 		self.basePath = "./softRoute"
+		self.retryLimit = 1
 		
 	def formCommand(self):
 		self.command = [self.basePath, "-or", str(self.dataRate),
 			"-dr", str(self.forwarddr), "-drb", str(self.backwarddr),
-			"-a", self.arpPath, self.int1, self.int2]
+			"-a", self.arpPath, "-rl", self.retryLimit, self.int1, self.int2]
 		
 
 if __name__ == "__main__":
@@ -119,6 +137,9 @@ if __name__ == "__main__":
 	
 	sl.commands.append("FORDR")
 	sl.commandactions.append(forwardDrop(sr))
+	
+	sl.commands.append("RETL")
+	sl.commandactions.append(retryLimit(sr))
 	
 	if sl.soc == None:
 		print "Failed to Listen"

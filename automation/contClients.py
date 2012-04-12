@@ -23,6 +23,11 @@ class softRouteClient(socCmd.socCmd):
 		now = time.time()
 		self.doCommand(["DATAR", str(rate)])
 		self.lThread.waitFor("DATAR", now=now)
+	
+	def changeRetryLimit(self, limit):
+		now = time.time()
+		self.doCommand(["RETL", str(limit)])
+		self.lThread.waitFor("RETL", now=now)
 
 class socketTXClient(socCmd.socCmd):
 	def __init__(self):

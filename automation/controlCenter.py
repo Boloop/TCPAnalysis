@@ -158,44 +158,47 @@ if True:
 	
 	trials = 50
 	print "running", trials, "trials per test!"
-	for droprate in [1, 10, 20, 50, 100, 150, 200, 500, 1000]:
-		#Set the drop rate!
-		print "Setting DataRate"
-		softroute.changeDataRate(100000)
-		print "Setting DropRate to", droprate
-		softroute.changeDropRate(droprate)
-		print "Executing softroute"
-		softroute.execute()
-		time.sleep(10)
-		for cong in ["reno", "cubic", "veno", "westwood"]:
-			for trialnum in xrange(trials):
-				print "Droprate:", droprate, "cong:", cong, "TrialNum:", trialnum
-				tcps = "data_dr"+str(droprate)+"_c_"+cong+"_t_"+str(trialnum)
-				tcpdump.changeFileName(tcps)
-				tcpdump.execute()
-				time.sleep(1)
-				
-				sockettx.changeCongestion(cong)
-				sockettx.execute()
-				i = 0
-				while i < 120:
-					#print "i", i
+	for retryLimit in [1,2,3,5,10,20]:
+		for droprate in [1, 10, 20, 50, 200]:
+			#Set the drop rate!
+			print "Setting DataRate"
+			softroute.changeDataRate(100000)
+			print "setting retry Limit to", retryLimit
+			softrout.changeRetryLimit(retryLimit)
+			print "Setting DropRate to", droprate
+			softroute.changeDropRate(droprate)
+			print "Executing softroute"
+			softroute.execute()
+			time.sleep(10)
+			for cong in ["reno", "cubic", "veno", "westwood"]:
+				for trialnum in xrange(trials):
+					print "Droprate:", droprate, "RetryLimit:", retryLimit, "cong:", cong, "TrialNum:", trialnum
+					tcps = "data_dr"+str(droprate)+"_rl_"+str(retryLimit)+"_c_"+cong+"_t_"+str(trialnum)
+					tcpdump.changeFileName(tcps)
+					tcpdump.execute()
+					time.sleep(1)
+					
+					sockettx.changeCongestion(cong)
+					sockettx.execute()
+					i = 0
+					while i < 120:
+						#print "i", i
+						if sockettx.isRunning():
+							time.sleep(1)
+							i += 1
+						else:
+							break
+					
 					if sockettx.isRunning():
-						time.sleep(1)
-						i += 1
+						print "TO"
+						sockettx.kill()
 					else:
-						break
-				
-				if sockettx.isRunning():
-					print "TO"
-					sockettx.kill()
-				else:
-					print "Not TO"
-				
-				tcpdump.kill()
-		
-		softroute.kill()
-		
+						print "Not TO"
+					
+					tcpdump.kill()
+			
+			softroute.kill()
+			
 	print "closing connections"
 	tcpdump.close()
 	softroute.close()

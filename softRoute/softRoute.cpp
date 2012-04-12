@@ -20,6 +20,7 @@ struct args
 	int nOutputRate;
 	int nDropRate;
 	int nDropRateBack;
+	int nRetryLimit;
 };
 
 void intArgs(args *a)
@@ -33,6 +34,8 @@ void intArgs(args *a)
 	a->nOutputRate = 0;
 	a->nDropRate = 0; //
 	a->nDropRateBack = 0;
+	a->nRetryLimit = 0;
+	
 
 }
 
@@ -126,6 +129,9 @@ bool readArgs(args *a, int argc, char **argv)
 				return false;
 			}
 		} // if -dr
+		
+		
+		
 
 		// -drb DroprateBack out of 1000
 		if ( strcmp (parg,"-drb") == 0 ) // -or for Outputrate
@@ -157,7 +163,37 @@ bool readArgs(args *a, int argc, char **argv)
 			}
 		} // if -drb
 
+	
+	
+		// -rl Retry limit
+		if ( strcmp (parg,"-rl") == 0 ) // -rl for retry limit
+		{
+			if (argc != iend-1)
+			{
+				int limit = atoi (argv[i+1]);
+				if (limit <= 0)
+				{
+					fprintf(stderr, "Retry Limit -rl incorrect...\n");
+					return false;
+				}
+				if(limit > 100 || limit < 0)
+				{
+					fprintf(stderr, "Retry Limit -rl must be between 0-100\n");
+					return false;
+				}
 
+				a->nRetryLimit = limit;
+
+
+				i++;
+				continue;
+			}
+			else
+			{
+				fprintf(stderr, "Please enter a size for -rl retry Limit\n");
+				return false;
+			}
+		} // if -rl
 
 		// -pa Print ARP TABLE!
 		if ( strcmp (parg,"-pa") == 0 )
@@ -291,6 +327,12 @@ int main(int argc, char **argv)
 			devInjOne->setDropRate(a.nDropRate);
 		}
 
+	}
+	
+	if(a.nRetryLimit > 0)
+	{
+		printf("Setting retryLimit to %d (forward Path only!)\n", a.nRetryLimit);
+		devInjTwo->setRetryLimit(a.nRetryLimit);
 	}
 
 	//devInjOne->open();

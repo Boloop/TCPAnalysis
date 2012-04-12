@@ -45,13 +45,14 @@ private:
 
 	bool				 m_bPrintPackets;
 
-	ArpTable            *m_pArpTable;
+	ArpTable            		*m_pArpTable;
 
 	BufferQueue			*m_pBufferQueue;
 	bool				 m_bIsDead;
 
-	int					 m_nDropRate;
+	int				 m_nDropRate;
 
+	int				 m_nRetryLimit;
 
 public:
 	InterfaceOutput(char*);
@@ -65,6 +66,7 @@ public:
 
 	void setUpBufferWithSize(int);
 	void setDropRate(int);
+	void setRetryLimit(int);
 
 	void setArpTable(ArpTable*);
 	virtual ~InterfaceOutput();

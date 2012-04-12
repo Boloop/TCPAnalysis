@@ -26,6 +26,7 @@ InterfaceOutput::InterfaceOutput(char* interface) {
 	m_tvNextPacket.tv_sec = 0;
 	m_tvNextPacket.tv_usec = 0;
 	m_nDropRate = 0;
+	m_nRetryLimit = 1;
 
 
 }
@@ -285,22 +286,31 @@ void InterfaceOutput::Execute()
 		//Free locks, got data, now wait for TX time and inject.
 
 		if (m_bPrintPackets) printf("Sleeping\n");
-		if(m_nOutputRate != 0)
-		{
-			//Work how far to set the fecker back
-			t = (size*1000000)/m_nOutputRate; // time in uSec!
-			if (m_bPrintPackets) printf("Sleeping for %d\n", t);
-			usleep((useconds_t)t);
-		}
-
-		//Drop based on dropRate
+		
+		int retrys = 0;
 		bool drop = false;
-		if (m_nDropRate != 0)
+		for (retrys = 0; retrys < m_nRetryLimit; retrys++)
 		{
-			int rnd = rand()%1000;
-			if(rnd < m_nDropRate)
-				drop = true;
+			if(m_nOutputRate != 0)
+			{
+				//Work how far to set the fecker back
+				t = (size*1000000)/m_nOutputRate; // time in uSec!
+				if (m_bPrintPackets) printf("Sleeping for %d\n", t);
+				usleep((useconds_t)t);
+			}
 
+			//Drop based on dropRate
+			drop = false;
+			if (m_nDropRate != 0)
+			{
+				int rnd = rand()%1000;
+				if(rnd < m_nDropRate)
+					drop = true;
+
+			}
+			
+			if (!drop) break; //Escape the hell hole!
+		
 		}
 
 
@@ -349,6 +359,11 @@ void InterfaceOutput::Execute()
 void InterfaceOutput::setDropRate(int dr)
 {
 	m_nDropRate = dr;
+}
+
+void InterfaceOutput::setRetryLimit(int dr)
+{
+	m_nRetryLimit = dr;
 }
 
 InterfaceOutput::~InterfaceOutput() {

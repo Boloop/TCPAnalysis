@@ -305,7 +305,14 @@ void InterfaceOutput::Execute()
 			{
 				int rnd = rand()%1000;
 				if(rnd < m_nDropRate)
+				{
 					drop = true;
+					if (m_bPrintPackets) printf("Dropped on try %d\n", retrys);
+				}
+				else
+				{
+					if (m_bPrintPackets) printf("Succeded on try %d\n", retrys);
+				}
 
 			}
 			

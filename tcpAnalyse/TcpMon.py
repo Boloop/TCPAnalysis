@@ -23,6 +23,8 @@ ECN_ECT0 = 2
 ECN_ECT1 = 1
 ECN_CE = 3
 
+INCLUDE_NOHEADER = 0
+
 
 
 optsToString = {dpkt.tcp.TCP_OPT_ALTSUM		:"ALTSUM",
@@ -314,6 +316,7 @@ class TcpCon(object):
 		return syn, synack, ack
 		
 				
+	
 				
 		
 	def getPacketCount(self):
@@ -436,7 +439,7 @@ class TcpCon(object):
 			pktts = opts.get(dpkt.tcp.TCP_OPT_TIMESTAMP)
 			
 			if pktts == None:
-				print "Na1"
+				#print "Na1"
 				continue
 			
 			if lastsentTS == None:
@@ -445,7 +448,7 @@ class TcpCon(object):
 				continue
 			
 			if lastsentTS > pktts[1]:
-				print "hey"
+				#print "hey"
 				continue
 			lastsentTS = pktts[1]
 			lastsentTSsent = ts
@@ -472,7 +475,7 @@ class TcpCon(object):
 				if outtype == DATA_FLOAT:
 						
 						time = dfToFloat(time)
-				print "Added", i
+				#print "Added", i
 				rtt.append(dfToFloat(td))
 				times.append(time)
 				
@@ -482,7 +485,7 @@ class TcpCon(object):
 			if i >= len(ldata):
 				print "Empty!"
 				break
-		print type(times[0]), type(rtt[0])
+		#print type(times[0]), type(rtt[0])
 		return times, rtt
 			
 			
@@ -668,6 +671,26 @@ class TcpCon(object):
 		
 		return tdata, dfToFloat(lts-fts)
 				
+	
+	def getOveralData(self, path=PATH_FORWARD, include=INCLUDE_NOHEADER):
+		"""
+		count all data that has been TXed on path (including/excluding headers)
+		also includes redundant segments
+		"""
+		if path == PATH_FORWARD:
+			segs = self.forward
+			acks = self.backward
+		else:
+			segs = self.backward
+			acks = self.forward
+		
+		
+		result = 0
+		
+		for ts, p in segs:
+			result += len(p.data)
+		
+		return result
 							
 	def getRetransmits(self, outtype=DATA_FLOAT, path=PATH_FORWARD, rel=RELATIVE_LASTACK):
 		"""

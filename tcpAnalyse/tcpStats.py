@@ -151,6 +151,9 @@ class TcpStat(object):
 		self.maxRTT = None
 		self.avgRTT = None
 		
+		self.tData = None
+		self.tTime = None
+		
 	def getCongWin(self):	
 		"""
 		Will load up in the congWindow
@@ -215,11 +218,17 @@ class TcpStat(object):
 			self.retransmitPercent *= 100
 		
 		return self.retransmitPercent
+		
+	def getDataStats(self):
+		if self.tData == None:
+			self.tData, self.tTime = tcpCon.getTXRate()
+		return self.tData, self.tTime
 	
 	def getRTTTS(self):
 		if self.rttTS == None:	
 			self.rttTS = self.tm.getRTTbyTS()
 		return self.rttTS
+
 	
 	def getRTTTSstats(self):
 		if self.avgRTT == None:
@@ -246,6 +255,20 @@ class TcpStat(object):
 		Will return a dictionary summery of results
 		"""
 		result = {}
+		
+		result["CONGavg"] = self.getAvgCongWin()
+		result["RETRANScount"] = self.getRetransmitDataCount()
+		result["RETRANSdata"] = self.getOveralDataAmount()
+		result["RETRANSpercent"] = self.getRetransmitPercent()
+		rttmin, rttmax, rttavg = self.getRTTTSstats()
+		result["RTTmin"] = rttmin
+		result["RTTmax"] = rttmax
+		result["RTTavg"] = rttavg
+		result["DATAoverall"] = self.getOveralDataAmount()
+		result["DATAtotal"], result["TIME"] = self.getDataStats()
+		
+		return result
+		
 				 
 	
 if __name__ == "__main__":
@@ -276,9 +299,12 @@ if __name__ == "__main__":
 	retransmitcount = tcpstat.getCountRetransmits()
 	retransmitpercent = tcpstat.getRetransmitPercent()
 	rttmin, rttmax, rttavg = tcpstat.getRTTTSstats()
+	result = tcpstat.getDic()
 	print "wrAvg", wrAvg
 	print "{0} bytes sent over {1}secs at {2}bytes/sec".format(tdata, tdif, tdata/tdif)
 	print "avg CongWin", avgcongwin
 	print "retransmit count", retransmitcount
 	print "retransmit percent", retransmitpercent
 	print "Rtt min, max, avg", rttmin, rttmax, rttavg
+	
+	

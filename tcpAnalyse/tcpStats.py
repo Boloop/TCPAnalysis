@@ -124,7 +124,9 @@ def getAvg(data):
 		accum += area 
 		
 		index += 1
-	
+	if times[-1] == times[0]:
+		return -1
+		
 	return accum/(times[-1]-times[0])
 		
 	
@@ -214,14 +216,17 @@ class TcpStat(object):
 			
 			
 		
-			self.retransmitPercent = float(self.getRetransmitDataCount())/float(self.getOveralDataAmount())
-			self.retransmitPercent *= 100
+			if self.getOveralDataAmount() == 0:
+				self.retransmitPercent = 0.0
+			else:
+				self.retransmitPercent = float(self.getRetransmitDataCount())/float(self.getOveralDataAmount())
+				self.retransmitPercent *= 100
 		
 		return self.retransmitPercent
 		
 	def getDataStats(self):
 		if self.tData == None:
-			self.tData, self.tTime = tcpCon.getTXRate()
+			self.tData, self.tTime = self.tm.getTXRate()
 		return self.tData, self.tTime
 	
 	def getRTTTS(self):
@@ -246,7 +251,10 @@ class TcpStat(object):
 				if self.maxRTT < r:
 					self.maxRTT = r
 			
-			self.avgRTT = float(total)/len(rtts)
+			if len(rtts) == 0:
+				self.avgRTT = -1.0
+			else:
+				self.avgRTT = float(total)/len(rtts)
 		
 		return self.minRTT, self.maxRTT, self.avgRTT
 	
@@ -306,5 +314,6 @@ if __name__ == "__main__":
 	print "retransmit count", retransmitcount
 	print "retransmit percent", retransmitpercent
 	print "Rtt min, max, avg", rttmin, rttmax, rttavg
+	print "Results", result
 	
 	

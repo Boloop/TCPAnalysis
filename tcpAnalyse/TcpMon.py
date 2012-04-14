@@ -209,6 +209,9 @@ class TcpCon(object):
 		
 		self.origin = self.forward[0][0]
 		
+		if len(self.backward) == 0:
+			return
+		
 		if self.origin > self.backward[0][0]:
 			self.origin = self.backward[0][0]
 		
@@ -669,7 +672,10 @@ class TcpCon(object):
 				tdata += len(p.data)
 				lts = ts
 		
-		return tdata, dfToFloat(lts-fts)
+		if lts == None or fts == None:
+			return tdata, None
+		else:
+			return tdata, dfToFloat(lts-fts)
 				
 	
 	def getOveralData(self, path=PATH_FORWARD, include=INCLUDE_NOHEADER):

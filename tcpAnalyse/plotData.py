@@ -8,9 +8,40 @@ if __name__ == "__main__":
 		sys.exit(-1)
 	
 	datapath = sys.argv[1]
-	xkey =  sys.argv[2]
-	ykey = 	sys.argv[3]
-	zkey =  sys.argv[4]
+	xkey =  sys.argv[-3]
+	ykey = 	sys.argv[-2]
+	zkey =  sys.argv[-1]
+	
+	bebOnly = False
+	retryLimit = None
+	dropRate =  None
+	
+	ymax = None
+	ymin = None
+	
+	if len(sys.argv) > 5:
+		opts = sys.argv[1:-3]
+		if "-beb" in opts:
+			bebOnly = True
+		
+		
+		if "-rl" in opts:
+			retryLimit = int(opts[1+opts.index("-rl")])
+		
+		
+		if "-dr" in opts:
+			dropRate = int(opts[1+opts.index("-dr")])*0.1
+			
+		if "-yrange" in opts:
+			ymin = float(opts[1+opts.index("-yrange")])
+			ymax = float(opts[2+opts.index("-yrange")])
+		
+	
+	print "BEB:", bebOnly, "RetryLimit:", retryLimit, "DropRate:", dropRate
+			 
+	
+	
+	
 	
 	print "Loading"
 	datafile = open(datapath, "r")
@@ -21,6 +52,20 @@ if __name__ == "__main__":
 	#Get keys, enumerate
 	for conds, data in data:
 		r = conds[zkey]
+		
+		#Screen Data
+		if bebOnly != None:
+			if conds["beb"] != bebOnly:
+				continue
+		
+		if retryLimit != None:
+			if conds["retrylimit"] != retryLimit:
+				continue
+		
+		if dropRate != None:
+			if conds["droprate"] != dropRate:
+				continue
+		
 		
 		if not r in zdatagroup.keys():
 			zdatagroup[r] = [(conds, data)]
@@ -49,7 +94,16 @@ if __name__ == "__main__":
 		i = 0
 		for x in xlistordered:
 			indexy = xlist.index(x)
-			ylistordered[i] = ylist[indexy]
+			
+			yvalue = ylist[indexy]
+			if ymax != None:
+				if yvalue > ymax:
+					yvalue = ymax
+				elif yvalue < ymin:
+					yvalue = ymin
+			
+			
+			ylistordered[i] = yvalue
 			i += 1
 	
 	

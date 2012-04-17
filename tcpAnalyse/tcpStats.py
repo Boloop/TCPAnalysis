@@ -156,6 +156,9 @@ class TcpStat(object):
 		self.tData = None
 		self.tTime = None
 		
+		self.txrOverall = None
+		self.txrTotal = None
+		
 	def getCongWin(self):	
 		"""
 		Will load up in the congWindow
@@ -258,6 +261,19 @@ class TcpStat(object):
 		
 		return self.minRTT, self.maxRTT, self.avgRTT
 	
+	def getTransmisionRates(self):
+		if self.txrOverall == None:
+			tdata, time = self.getDataStats()
+			odata = self.getOveralDataAmount()
+			
+			if time != None:
+				if tdata > 0:
+					self.txrTotal = float(tdata)/float(time)
+				if odata > 0:
+					self.txrOverall = float(odata)/float(time)
+			
+		return self.txrOverall, self.txrTotal
+	
 	def getDic(self):
 		"""
 		Will return a dictionary summery of results
@@ -274,8 +290,8 @@ class TcpStat(object):
 		result["RTTavg"] = rttavg
 		result["DATAoverall"] = self.getOveralDataAmount()
 		result["DATAtotal"], result["TIME"] = self.getDataStats()
-		result["TXRATEoverall"] = result["DATAoverall"]/result["TIME"]
-		result["TXRATEtotal"] = result["DATAtotal"]/result["TIME"]
+		result["TXRATEoverall"], result["TXRATEtotal"] = self.getTransmisionRates()
+		
 		
 		return result
 		

@@ -266,7 +266,7 @@ class TcpStat(object):
 			tdata, time = self.getDataStats()
 			odata = self.getOveralDataAmount()
 			
-			if time != None:
+			if time != None and time > 0:
 				if tdata > 0:
 					self.txrTotal = float(tdata)/float(time)
 				if odata > 0:

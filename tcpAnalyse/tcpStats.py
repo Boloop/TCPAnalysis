@@ -274,6 +274,8 @@ class TcpStat(object):
 		result["RTTavg"] = rttavg
 		result["DATAoverall"] = self.getOveralDataAmount()
 		result["DATAtotal"], result["TIME"] = self.getDataStats()
+		result["TXRATEoverall"] = result["DATAoverall"]/result["TIME"]
+		result["TXRATEtotal"] = result["DATAtotal"]/result["TIME"]
 		
 		return result
 		

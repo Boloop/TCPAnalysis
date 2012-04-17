@@ -39,6 +39,12 @@ if __name__ == "__main__":
 	infilepath = sys.argv[1]
 	outfilepath = sys.argv[2]
 	
+	rttlimit = None
+	if len(sys.argv) > 3:
+		if "-RTT" in sys.argv:
+			i = sys.argv.index("-RTT")
+			rttlimit = float(sys.argv[i+1])*0.001
+	
 	print "Loading inFile"
 	infile = open(infilepath, "r")
 	indata = json.loads(infile.read())
@@ -82,8 +88,14 @@ if __name__ == "__main__":
 				#If data None or below zero, ignore
 				if datal[key] == None or datal[key] < 0:
 					continue
-				
-				basekeys[key].append(datal[key])
+					
+				#If rttlimit!
+				skip = False
+				if key.startswith("RTT") and rttlimit != None:
+					if datal[key] > rttlimit:
+						skip = True
+				if not skip: 
+					basekeys[key].append(datal[key])
 		
 		#All data accumulated for condition, Average!
 		
